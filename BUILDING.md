@@ -54,6 +54,21 @@ connections when many containers start at once.
 Build option: `OM_CDC=1` adds Felucca's USB serial function (off by default: one plain
 MIDI interface).
 
+### The M-Vave SMK-37
+
+```
+BOARD=smk37 ./build.sh            # or: ./build.sh --board smk37
+```
+
+builds `build/zen1-smk37.fwsc` (identity `SMK-37 Pro_460`; `--release X.Y.Z` gives `zen-1-smk37-X.Y.Z.fwsc`,
+`SMK-37 Pro_46XXYZ`: six digits, the minor and patch versions 0..9; 1.0.2 is `SMK-37 Pro_460102`). `MODEL=elite` or `MODEL=mke` builds the same firmware under the SMK-37 Elite's or the
+MKE-P37's model name (`build/zen1-smk37-elite.fwsc`, `build/zen1-smk37-mke.fwsc`), so M-Vave's updater still takes
+that unit's factory package; the Starrykey 37 Play uses the default build. Everything for the SMK-37 sits behind
+`BOARD_SMK37` (`-DBOARD_SMK37=1` for the app and the update loader); without `BOARD` the FM-1 build is unchanged.
+`ZN_LCD_BAUD=0..15` sets the SMK build's LCD SPI divider (default 4 = 12 MHz, the stock firmware's). Both boards
+write the same files in `build/`: build the FM-1 last before `tests/run_tests.sh`. See [SMK37.md](SMK37.md) for the
+controls and the install.
+
 The build also generates `build/gen/` (the font). It fails if a soft-double routine is linked
 (a `double` crept in) and checks the image, RAM and pool sizes.
 
@@ -68,7 +83,9 @@ libm; the pitch core (`tuning`, `smooth`, `bend`); the FM6 core; the instrument;
 and the proof that it fails without smoothing; the no-double check; flash storage; Felucca's update-path
 tests against the package; the whole app in the simulator (`tests/scenarios/*.zen`: every scene, mood, knob,
 key and save path, with screenshots and audio in `build/scenarios/`); the browser build and the bench exports
-in Node; and the Python tools' self-tests.
+in Node; and the Python tools' self-tests. With them, the SMK-37 build's flash map, packages and update path, the
+installer library against a simulated keyboard (`web/test_web.mjs`), and its controls in the simulator
+(`tests/scenarios/smk37/*.zen`).
 
 The platform guard compares the protected platform files with FoMni's commit recorded in `docs/upstream.md`, so
 it needs that commit's objects once:
@@ -79,7 +96,8 @@ git fetch fomni
 ```
 
 `host/build_host.sh` builds the simulator alone; `build/host/zen_host SCRIPT OUTDIR` runs one
-script (the command list is at the top of `host/zen_host.c`).
+script (the command list is at the top of `host/zen_host.c`). `host/build_host.sh smk37` builds the SMK-37
+build's (`build/host/zen_host_smk37`).
 
 ## Install
 
