@@ -53,11 +53,22 @@ footer { max-width: 1040px; margin: 2rem auto 0; color: var(--muted); font-size:
 .bar { display: flex; flex-wrap: wrap; gap: .5rem 1.2rem; align-items: center; margin: .9rem 0 0; color: var(--muted); font-size: .92rem; }
 .bar button { font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: .3em .8em; cursor: pointer; }
 .bar .cpu { font-variant-numeric: tabular-nums; }
-.help h2 { font: 600 1.1rem "Barlow Semi Condensed", "Barlow", sans-serif; margin: 0 0 .3rem; }
-.help { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem 2rem; margin: 1.6rem 0 0; }
-.help h2 { font: 600 1.1rem "Barlow Semi Condensed", "Barlow", sans-serif; margin: 0 0 .3rem; }
-.help p, .help ul { margin: 0; color: var(--muted); max-width: 60ch; }
-.help ul { padding-left: 1.1rem; }
+.help { margin: 1.8rem 0 0; }
+.help section { margin: 0 0 1.4rem; }
+.help .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: 0 2.4rem; }
+.help h2 { font: 600 1.25rem "Barlow Semi Condensed", "Barlow", sans-serif; margin: 0 0 .4rem; }
+.help h3 { font: 600 1rem "Barlow Semi Condensed", "Barlow", sans-serif; margin: .8rem 0 .2rem; }
+.help p, .help ul { margin: 0 0 .4rem; max-width: 70ch; }
+.help ul { padding-left: 1.2rem; }
+.help li { margin: .2rem 0; }
+.help li > ul { margin: .15rem 0 .3rem; }
+.help table { border-collapse: collapse; width: 100%; max-width: 64rem; font-size: .95rem; margin: .3rem 0 .6rem; }
+.help th, .help td { text-align: left; vertical-align: top; padding: 6px 10px 6px 0; border-top: 1px solid var(--rule); }
+.help thead th { border-top: 0; color: var(--muted); font-weight: 600; }
+.help .tablewrap { overflow-x: auto; }
+.help tbody th { white-space: nowrap; font-weight: 400; }
+.help .modes { color: var(--muted); }
+.help .start-here { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 10px 16px; max-width: 70ch; }
 kbd { font: 600 .85em ui-monospace, Menlo, monospace; background: var(--card); border: 1px solid var(--rule); border-radius: 4px; padding: 0 .3em; color: var(--ink); }
 </style>
 </head>
@@ -65,7 +76,7 @@ kbd { font: 600 .85em ui-monospace, Menlo, monospace; background: var(--card); b
 <main>
 <header>
   <h1>ZEN-1 <small lang="ja" style="font-weight:400;opacity:.6">禅</small></h1>
-  <p>living ambient scenes for the FM-1 (Sakura, Koi, Hotaru), with FuMi-1's koto as an instrument mode, in the browser: the same code the FM-1 runs</p>
+  <p>Ambient scenes for the M-VAVE FM-1, in your browser: the same code the FM-1 runs, with sound.</p>
   <nav><a href="../">About</a><a href="__REPO__">Source</a></nav>
 </header>
 
@@ -84,54 +95,142 @@ kbd { font: 600 .85em ui-monospace, Menlo, monospace; background: var(--card); b
   <button id="reset" type="button" title="Forget your settings and start again from the factory settings">Factory reset</button>
 </div>
 
-<section class="help">
-  <div>
-    <h2>Playing</h2>
+<div class="help">
+  <section class="start-here">
+    <h2>Start here</h2>
     <ul>
-      <li>It starts in a scene. <b>PRESETS</b> changes the scene (Sakura, Koi, Hotaru), <b>ALGORITHM</b> the Mood,
-        <b>SELECT</b> the Activity; <b>FX</b> steps the four pages of knobs (Scene, Volume, Nature, Music); <b>GLO</b> switches painterly / pixel art;
-        <b>PLAY</b> grows a new picture; a tap on <b>HOME</b> shows the battery, scene and mood; <b>SAVE</b> held 3 s goes back to the defaults; <b>HOME held</b> (<kbd>Esc</kbd>
-        held) switches to the instrument and back. White keys play the scene's instrument and the scene answers (petals,
-        koi food, a firefly); black keys are each scene's own (a harp, pebbles and the bamboo knock, firefly flashes and a
-        breeze). Everything the scenes do is in <a href="../guide/">the guide</a>. The rest of this list is the
-        instrument.</li>
-      <li><b>White keys</b> mi fa la ti do, three times, and a top mi: the ST-50's lower row. The tonics (keys 1, 6, 11, 16) are lit.</li>
-      <li><b>Black keys</b> the upper row (fa# sol ti-flat do# re), or ornaments when <b>SEQ</b> is on (vibrato, trill, damp, strong pluck).</li>
-      <li><b>SELECT</b> 本数 (the key), <b>PRESETS</b> the instrument, <b>ALGORITHM</b> the scale (IN, YO, MIN'YO).</li>
-      <li><b>KNOB 1–4</b> the four values on the screen: HOME 余韻, trill rate, vibrato depth, reverb; <b>FX</b> the sound page; <b>EDIT</b> the bend page.</li>
-      <li><b>LFO</b> vibrato, <b>ARP</b> trill, <b>GLO</b> mono / poly, <b>SEL</b> tap: 平均律 / 純正律, hold: the tuning page.</li>
-      <li><b>OCT−</b> / <b>OCT+</b> with a note held: bend down / up (sprung); with none: octave.</li>
+      <li>Press <b>Switch on</b> on the panel. It plays by itself: you never need to touch anything.</li>
+      <li>Turn <b>PRESETS</b> to change the scene, and <b>ALGORITHM</b> to change the mood.</li>
+      <li>Press <b>PLAY</b> for a new picture, and try the white keys: they play along with the scene.</li>
     </ul>
-  </div>
-  <div>
-    <h2>Mouse and touch</h2>
+  </section>
+
+  <p class="modes">ZEN-1 has two modes, and the same buttons and keys do different things in each: <b>a scene</b>
+    (the ambient mode it starts in) and <b>the koto instrument</b>. Hold <b>HOME</b> to switch between them; the screen
+    shows which one you're in.</p>
+
+  <section>
+    <h2>In a scene (the ambient mode)</h2>
     <ul>
-      <li>Drag a knob up or down, or use the scroll wheel over it.</li>
-      <li>Click or touch buttons and keys. Drag across the white keys for a glissando. Several fingers at once work on a touch screen.</li>
-      <li>Combinations with a mouse: <kbd>Shift</kbd>-click (or right-click) a button to hold it down, click again to let go.</li>
+      <li><b>PRESETS</b>: the scene (Sakura, Koi, Hotaru).</li>
+      <li><b>ALGORITHM</b>: the mood (the time of day and the feel).</li>
+      <li><b>SELECT</b>: Activity, how busy the scene is (petals, koi food or fireflies, and so how many notes).</li>
+      <li><b>KNOB 1–4</b>: the four settings on the page that's showing.</li>
+      <li><b>FX</b>: show the knob pages and step through them: Scene, Volume, Nature, Music.
+        <b>SEL</b> goes back a page.</li>
+      <li><b>GLO</b>: painted look or pixel art.</li>
+      <li><b>PLAY</b>: a new picture (a new tree, pond, or field and moon).</li>
+      <li><b>HOME</b>
+        <ul>
+          <li>Tap: the battery, the scene and the mood.</li>
+          <li>Hold: the koto instrument (below); hold again to come back.</li>
+        </ul></li>
+      <li><b>SEQ</b>: the sleep timer, from 15 minutes to 8 hours.</li>
+      <li><b>SAVE</b>
+        <ul>
+          <li>Tap: save now (it also saves by itself).</li>
+          <li>Hold 3 seconds: reset everything.</li>
+        </ul></li>
+      <li><b>OCT− / OCT+</b>: the notes an octave down or up.</li>
+      <li><b>MASTER</b>: the volume.</li>
+      <li><b>White keys</b>: notes that always fit, and the scene answers.
+        <ul>
+          <li>Sakura: the blossoms shake and petals land with your note.</li>
+          <li>Koi: you drop food, and the koi play your note back as they find it.</li>
+          <li>Hotaru: a firefly rises to your note's height.</li>
+        </ul></li>
+      <li><b>Black keys</b>: each scene's own.
+        <ul>
+          <li>Sakura: a harp, ringing out on the river.</li>
+          <li>Koi: pebbles on singing bowls; the top key tips the bamboo.</li>
+          <li>Hotaru: firefly flashes; the top key sends a breeze.</li>
+        </ul></li>
     </ul>
-  </div>
-  <div>
-    <h2>Keyboard</h2>
+    <p>Everything the scenes do is in <a href="../guide/">the guide</a>.</p>
+  </section>
+
+  <section>
+    <h2>In the koto instrument (hold HOME)</h2>
     <ul>
-      <li><kbd>Tab</kbd> moves through every knob, button and key; each says what it does. <kbd>Space</kbd> or
-        <kbd>Enter</kbd> holds a button or key down while you hold it; <kbd>Shift</kbd>+<kbd>Enter</kbd> keeps a button
-        down until pressed again. A knob turns with the arrow keys, <kbd>Page Up</kbd> / <kbd>Page Down</kbd> faster;
-        MASTER is a slider (<kbd>Home</kbd> / <kbd>End</kbd> too). A lit button or key says so.</li>
-      <li>The single-key shortcuts below work while the page or the panel has focus (not in a field), and the
-        switch under the panel turns them off.</li>
-      <li>White keys 1–8: <kbd>Q</kbd>–<kbd>I</kbd>, 9–16: <kbd>A</kbd>–<kbd>K</kbd>. Black keys 1–11: <kbd>1</kbd>–<kbd>0</kbd>, <kbd>-</kbd>.</li>
-      <li><kbd>Z</kbd> / <kbd>X</kbd> OCT− / OCT+ (the bend with a note held), <kbd>Shift</kbd> LFO (vibrato), <kbd>/</kbd> ARP (trill), <kbd>Esc</kbd> HOME.</li>
-      <li><kbd>↑</kbd> <kbd>↓</kbd> turn SELECT (in a scene: Activity; in the instrument: 本数).</li>
+      <li><b>White keys</b>: mi fa la ti do, three times, and a top mi (the ST-50's lower row). The lit keys are the tonics.</li>
+      <li><b>Black keys</b>: the upper row (fa♯ sol ti♭ do♯ re). With <b>SEQ</b> on, ornaments: vibrato, trill, damp, strong pluck.</li>
+      <li><b>SELECT</b>: 本数 (the key). <b>PRESETS</b>: the instrument. <b>ALGORITHM</b>: the scale (IN, YŌ, MIN'YŌ).</li>
+      <li><b>KNOB 1–4</b>: the four values on the screen.
+        <ul>
+          <li>HOME page: 余韻 (ring), trill rate, vibrato depth, reverb.</li>
+          <li><b>FX</b>: the sound page. <b>EDIT</b>: the bend page.</li>
+        </ul></li>
+      <li><b>LFO</b>: vibrato. <b>ARP</b>: trill. <b>GLO</b>: mono or poly.</li>
+      <li><b>SEL</b>
+        <ul>
+          <li>Tap: equal (平均律) or just (純正律) tuning.</li>
+          <li>Hold: the tuning page.</li>
+        </ul></li>
+      <li><b>OCT− / OCT+</b>: with a note held, a sprung bend down or up; with none, the octave.</li>
+      <li><b>SAVE</b>: tap to save, hold 3 seconds to reset everything. <b>HOME</b> held: back to the scene.</li>
     </ul>
+  </section>
+
+  <div class="cols">
+    <section>
+      <h2>Mouse and touch</h2>
+      <ul>
+        <li><b>Knobs</b>: drag up or down, or use the scroll wheel over one.</li>
+        <li><b>Buttons and keys</b>: click or touch. Drag across the white keys for a glissando. Several fingers work at
+          once on a touch screen.</li>
+        <li><b>Holding a button</b> (for a combination): <kbd>Shift</kbd>-click or right-click it; click again to let go.</li>
+      </ul>
+    </section>
+    <section>
+      <h2>Keyboard</h2>
+      <ul>
+        <li><kbd>Tab</kbd> moves through every knob, button and key, and each one says what it does.</li>
+        <li><kbd>Space</kbd> or <kbd>Enter</kbd> holds a button or key down while you hold it.
+          <kbd>Shift</kbd>+<kbd>Enter</kbd> keeps a button down until you press it again.</li>
+        <li><b>Knobs</b>: the arrow keys; <kbd>Page Up</kbd> / <kbd>Page Down</kbd> for bigger steps. MASTER also takes
+          <kbd>Home</kbd> / <kbd>End</kbd>.</li>
+      </ul>
+    </section>
   </div>
-  <div>
-    <h2>Saving</h2>
-    <p>SAVE keeps your setup in this browser, as the FM-1 keeps it in its memory. Factory reset forgets it.
-      It is the firmware, not a recording: what you hear is ZEN-1 running, at the FM-1's 44.1 kHz.
-      The browser emulator comes from <a href="https://github.com/charlesvestal/fm1-fomni">FoMni</a>; the idea from <a href="https://www.groove-os.com/">Groove OS</a>.</p>
-  </div>
-</section>
+
+  <section>
+    <h2>Keyboard shortcuts</h2>
+    <p>These work while the page has focus (not in a text field); the switch under the panel turns them off. Each key
+      presses a control on the panel, so what it does depends on the mode.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th scope="col">Key</th><th scope="col">Presses</th><th scope="col">In a scene</th><th scope="col">In the koto instrument</th></tr></thead>
+      <tbody>
+        <tr><th scope="row"><kbd>Q</kbd>–<kbd>I</kbd>, <kbd>A</kbd>–<kbd>K</kbd></th><td>White keys 1–8, 9–16</td>
+          <td>Notes that fit the music; the scene answers</td><td>mi fa la ti do ×3 and a top mi</td></tr>
+        <tr><th scope="row"><kbd>1</kbd>–<kbd>0</kbd>, <kbd>-</kbd></th><td>Black keys 1–11</td>
+          <td>The scene's own: harp, pebbles or firefly flashes; the top key the bamboo or a breeze</td>
+          <td>The upper row (fa♯ sol ti♭ do♯ re), or ornaments with SEQ on</td></tr>
+        <tr><th scope="row"><kbd>Z</kbd> / <kbd>X</kbd></th><td>OCT− / OCT+</td>
+          <td>The notes an octave down / up</td><td>With a note held: bend down / up. With none: the octave</td></tr>
+        <tr><th scope="row"><kbd>↑</kbd> / <kbd>↓</kbd></th><td>SELECT</td>
+          <td>Activity: how busy the scene is</td><td>本数 (the key)</td></tr>
+        <tr><th scope="row"><kbd>Esc</kbd></th><td>HOME</td>
+          <td>Tap: battery, scene and mood. Hold: to the koto</td><td>Tap: the home page. Hold: back to the scene</td></tr>
+        <tr><th scope="row"><kbd>Shift</kbd></th><td>LFO</td><td>Not used</td><td>Vibrato on / off</td></tr>
+        <tr><th scope="row"><kbd>/</kbd></th><td>ARP</td><td>Not used</td><td>Trill on / off</td></tr>
+      </tbody>
+    </table></div>
+    <p>Every other control (FX, SEL, GLO, PLAY, SEQ, SAVE and the knobs) is on the panel: click it, or reach it with
+      <kbd>Tab</kbd>.</p>
+  </section>
+
+
+  <section>
+    <h2>About this page</h2>
+    <ul>
+      <li>It's the firmware itself, not a recording: what you hear is ZEN-1 running, at the FM-1's 44.1 kHz.</li>
+      <li><b>SAVE</b> keeps your settings in this browser, as the FM-1 keeps them in its memory. <b>Factory reset</b>
+        (under the panel) forgets them.</li>
+      <li>The browser emulator comes from <a href="https://github.com/charlesvestal/fm1-fomni">FoMni</a>; the idea from
+        <a href="https://www.groove-os.com/">Groove OS</a>.</li>
+    </ul>
+  </section>
+</div>
 </main>
 <footer><p>ZEN-1 is GPL-3.0, no warranty. <a href="../">About ZEN-1</a> · <a href="__REPO__">Source</a></p></footer>
 
@@ -234,18 +333,26 @@ function hit(c, cls) {
   c.hit = d;
 }
 // what each control does, on hover, in a scene and in the instrument (the help below says the same)
-const TIP = { FX: "Scene: show the knobs, then the next page. Instrument: the sound page", SEL: "Instrument: tap equal / Suiko tuning, hold the tuning page", ENV: "(free)",
-  LFO: "Instrument: vibrato on / off", EDIT: "Instrument: the bend page", GLO: "Scene: painterly / pixel art. Instrument: mono / poly",
-  HOME: "Tap: the status card (scene) or home page (instrument). Hold: scene / instrument", SAVE: "Save. Hold 3 s: back to the defaults",
-  ARP: "Instrument: trill on / off", SEQ: "Instrument: black keys upper row / ornaments", PLAY: "Scene: a new picture", REC: "(free)",
-  "OCT-": "Scene: octave down. Instrument: a note held bends down, none octave down", "OCT+": "Scene: octave up. Instrument: a note held bends up, none octave up",
-  SELECT: "Scene: Activity. Instrument: hon (the key)", PRESETS: "Scene: the scene. Instrument: the voice", ALGORITHM: "Scene: the Mood. Instrument: the scale",
+const TIP = { FX: "Scene: show the knob pages, then the next page. Instrument: the sound page",
+  SEL: "Scene: the page before. Instrument: tap equal / just tuning, hold the tuning page", ENV: "Not used",
+  LFO: "Instrument: vibrato on / off", EDIT: "Instrument: the bend page", GLO: "Scene: painted look / pixel art. Instrument: mono / poly",
+  HOME: "Tap: the battery, scene and mood (scene) or the home page (instrument). Hold: switch between scene and instrument",
+  SAVE: "Tap: save now. Hold 3 s: reset everything", ARP: "Instrument: trill on / off",
+  SEQ: "Scene: the sleep timer (each press the next time). Instrument: black keys upper row / ornaments",
+  PLAY: "Scene: a new picture", REC: "Not used",
+  "OCT-": "Scene: notes an octave down. Instrument: a note held bends down, none octave down",
+  "OCT+": "Scene: notes an octave up. Instrument: a note held bends up, none octave up",
+  SELECT: "Scene: Activity, how busy the scene is. Instrument: 本数 (the key)", PRESETS: "Scene: the scene. Instrument: the instrument",
+  ALGORITHM: "Scene: the mood. Instrument: the scale",
+  KNOB1: "The first setting on the page shown", KNOB2: "The second setting on the page shown",
+  KNOB3: "The third setting on the page shown", KNOB4: "The fourth setting on the page shown",
   MASTER: "Volume" };
 for (const [n, c] of [...Object.entries(buttons), ...Object.entries(knobs)]) if (TIP[n]) c.g.setAttribute("aria-description", TIP[n]);
 for (const [n, k] of Object.entries(knobs))                 // an endless knob: turned by the arrow keys
   if (k.role !== "master") k.g.setAttribute("aria-description", (TIP[n] ? TIP[n] + ". " : "") + "Arrow keys turn it; Page Up and Page Down turn it faster");
 keys.forEach((k, i) => k.g.setAttribute("aria-description", WHITE_K.includes(i)
-  ? "In a scene: plays the scene's instrument. In the instrument: a note" : "In a scene: the scene's own sound. In the instrument: a note or an ornament"));
+  ? "In a scene: a note that fits the music, and the scene answers. In the instrument: a note"
+  : "In a scene: the scene's own (a harp, a pebble, a firefly's flash; the top key the bamboo or a breeze). In the instrument: a note or an ornament"));
 for (const k of Object.values(knobs)) hit(k, "knob");
 for (const b of Object.values(buttons)) hit(b);
 keys.forEach((k) => hit(k));
