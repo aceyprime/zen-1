@@ -4,6 +4,11 @@ Identities are `FM-1_6` + major, minor and patch as two digits each; the FM-1 re
 (`python3 tools/fm1_install.py --info`). FuMi-1's own releases, up to 1.0.3 where ZEN-1 began, are in
 [its changelog](https://github.com/cartesive/fumi-1/blob/main/docs/CHANGELOG.md).
 
+## 1.0.2 — `FM-1_6010002`
+
+- **Sakura:** the water behind the tree's trunk moves like the rest of the river (its reflection had stayed still),
+  and the light's streaks and the rain's rings come anywhere on the river.
+
 ## 1.0.1 — `FM-1_6010001`
 
 - **Sakura:** the far bank's reflection now reaches across the whole river, behind the tree's trunk too. The trunk

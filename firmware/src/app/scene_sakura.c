@@ -159,7 +159,6 @@ static struct {
     int ntip;
     int16_t *kv;                            /* the knobs (the project's, scene.h): SKK_* */
     float spawn_acc, gust, gust_dir, gust_next, t, day;
-    float trunk_x;                          /* the trunk's right side: the river flows past it, not through it */
     float heavy_next;                       /* seconds to the next heavy fall */
     uint32_t landed, harp_keys, gathered;      /* (gathered: petals lying on our bank) */
     int key_note;                           /* the note the last key played (the host's tests) */
@@ -956,7 +955,6 @@ SC_SMALL static void sk_background(void)
     sk_bank(s, k, 1);
     sk_roots(s, k);
     sk_tufts(s, k);
-    sk.trunk_x = 40.0f;                               /* (the trunk in the water, x 2..38) */
     sk_blossoms();                                    /* (painted in, with the branches) */
     for (y = 0; y < s->h && y < 240; y++) {           /* the trunk and the bank on the water, by row */
         const uint8_t *p = s->px + y * W;
@@ -1634,7 +1632,7 @@ static void sk_step(uint32_t dt_ms)
             float u = sc_frand();
             sk_s[i].y = SK_WATER + 3.0f + (236.0f - SK_WATER) * sk_sqrt(u);
             near = (sk_s[i].y - SK_WATER) / (240.0f - SK_WATER);
-            sk_s[i].x = sk.trunk_x + (240.0f - sk.trunk_x) * sc_frand();
+            sk_s[i].x = 240.0f * sc_frand();          /* (the whole river: behind the trunk, it is hidden) */
             sk_s[i].len = 5.0f + 22.0f * near * (0.5f + sc_frand());
             sk_s[i].life = 3.0f + 4.0f * sc_frand();
             sk_s[i].age = 0.0f;
@@ -1713,7 +1711,7 @@ static void sk_step(uint32_t dt_ms)
         if (sk.rain > 0.01f) {
             if (sc_frand() < sk.drops * sk.drops * dt * 5.0f)   /* a drop's ring on the water (with the falling
                                                        * rain, a few first) */
-                sk_ripple_at(sk.trunk_x + 4.0f + (236.0f - sk.trunk_x) * sc_frand(), SK_WATER + 6.0f + 64.0f * sc_frand(), 0.0f);
+                sk_ripple_at(4.0f + 232.0f * sc_frand(), SK_WATER + 6.0f + 64.0f * sc_frand(), 0.0f);
         }
     }
     /* a butterfly across (not in a shower) */
@@ -2298,7 +2296,7 @@ static void sk_draw(void)
             const uint8_t *b = r8_bg.px + y * W;
             uint8_t *d = s->px + y * W;
             for (x = 0; x < sk_fgx[y]; x++)
-                if ((uint8_t)(b[x] - SK_WAT) >= 16u)
+                if (!sk_wet(b[x]))                    /* (the water behind the trunk, its reflection too, moves) */
                     d[x] = b[x];
         }
     }
