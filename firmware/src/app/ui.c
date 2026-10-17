@@ -9,7 +9,8 @@
  *   LFO ビブラート   ARP トリラー   GLO 単音/和音   SEL 調律 (tap: 平均律 / 純正律; hold: the tuning page)
  *   OCT- / OCT+    a note held: pitch bend down / up (sprung); none held: octave down / up
  *   HOME FX EDIT   the pages: HOME, SOUND, BEND.  SAVE saves (and it autosaves when quiet)
- *   OCT- + OCT+ held 5 s: update mode (main_fm1.c; never reassigned) */
+ *   OCT- + OCT+ held 5 s: update mode (main_fm1.c; never reassigned)
+ * The SMK-37 build (BOARD_SMK37): the same, and the SMK's own controls (below, "SMK-37"). */
 
 enum { V_HOME, V_SOUND, V_BEND, V_TUNING, NVIEWS };
 static const char *const VIEW_NAME[NVIEWS] = {"Home", "Sound", "Bend", "Tuning"};
@@ -325,6 +326,10 @@ static int home_held(void)                         /* HOME held long enough, onc
 }
 static void mode_set(int m);
 static int save_hold(void);
+#if BOARD_SMK37
+static void smk_input(void);
+static void smk_pads(void);
+#endif
 
 static void input(void)
 {
@@ -386,6 +391,9 @@ static void input(void)
             ui.touch_until = plat_ms() + 1200u;
             ui.act_t = plat_ms();
         }
+#if BOARD_SMK37
+    smk_input();
+#endif
 }
 
 /* ------------------------------------------------------------- screen --- */
@@ -672,6 +680,9 @@ static int amb_leds(void);
 static void leds(void)
 {
     uint32_t b = 0, k = 0, i;
+#if BOARD_SMK37
+    smk_pads();
+#endif
     if (proj.mode && amb_leds())
         return;
     static const uint8_t VIEW_BTN[NVIEWS] = {B_HOME, B_FX, B_EDIT, B_SEL};
@@ -972,7 +983,11 @@ static void mode_set(int m)
         amb_enter();
         say("SCENE", amb.sc->name);
     } else {
+#if BOARD_SMK37
+        say("KOTO", "hold PATCH: back");           /* (PATCH is HOME on the SMK-37) */
+#else
         say("KOTO", "hold HOME: back");
+#endif
     }
     ui.msg_until = plat_ms() + 3000u;
 }
@@ -1359,6 +1374,9 @@ static void amb_input(void)
     for (i = 0; i < 4; i++)
         if ((e = plat_enc(EN_K1 + (int)i)) != 0)
             amb_turn(amb_knob_at(amb.page * 4 + (int)i), EN_K1 + (int)i, e);
+#if BOARD_SMK37
+    smk_input();
+#endif
 }
 
 static int amb_hits(int32_t sy, int32_t sh, int32_t y, int32_t h) { return y < sy + sh && sy < y + h; }
@@ -1554,8 +1572,13 @@ static void amb_overlay(int32_t sy, int32_t sh)
         amb_batt_icon(196, 218, amb_batt_pct(), K_TEXT);
     }
     if (plat_ms() < amb.welcome_until && amb_hits(sy, sh, 128, 108)) {   /* the welcome card: the four to start with */
+#if BOARD_SMK37
+        static const char *const W[4][2] = {{"PRESETS", "scene"}, {"ALGORITHM", "mood"}, {"SEQ PLAY", "new picture"},
+                                            {"FX", "the knobs"}};
+#else
         static const char *const W[4][2] = {{"PRESETS", "scene"}, {"ALGORITHM", "mood"}, {"PLAY", "new picture"},
                                             {"FX", "the knobs"}};
+#endif
         int i;
         cv_round(4, 128, 232, 108, 6, K_PANEL);
         text_c(120, 134, &FONT_B, "Welcome to ZEN-1", K_TEXT);
@@ -1785,6 +1808,161 @@ static int save_hold(void)                         /* 1: everything was just res
     }
     return 0;
 }
+
+#if BOARD_SMK37
+/* ------------------------------------------------------------ SMK-37 --- */
+/* The SMK-37's own controls (plat.h SMK section). The FM-1's keep their meaning (panel.c maps them); K1..K4 are
+ * KNOB 1..4, K5 MASTER, K6..K8 SELECT, ALGORITHM, PRESETS. The keys and the 16 pads play as the FM-1's keys (plat_keys:
+ * the pads are the 16 white keys, low notes on the bottom row; the outer keys an octave in). Here:
+ *   < >          the page before / the next one (in a scene as SEL / FX, in the instrument HOME SOUND BEND TUNING)
+ *   faders 1-4   in a scene its Volume page (Notes, Drone, Air, Water, 0..100); in the instrument its HOME page
+ *                (余韻, trill rate, vibrato depth, reverb). A fader takes over once it moves (also after a mode change)
+ *   pitch wheel  the instrument: up / down bends what sounds, as OCT+ / OCT- held (the BEND page's amounts and times)
+ *   mod wheel    the instrument: vibrato while it is up (the LFO ornament)
+ * In a scene the wheels do nothing; KNOB BANK and FADER BANK have no use. While a scene sleeps, < or > only wakes it. */
+#define SMK_FADER_PICKUP 3                         /* steps a fader moves before it takes over */
+#define SMK_WHEEL_ON 40                            /* a wheel past this: on; back under SMK_WHEEL_OFF: off */
+#define SMK_WHEEL_OFF 20
+static struct {
+    int16_t fad[4];                                /* the fader's last reading (-1: none yet) */
+    uint8_t live;                                  /* bit i: fader i has moved, it sets its value */
+    uint8_t mode;                                  /* the mode the faders were picked up in */
+    uint8_t bend[2], vib;                          /* the wheels' bend (BEND_DOWN, BEND_UP) and vibrato, on */
+    uint32_t sb;                                   /* the SMK buttons held (SB_*) */
+} smk = {{-1, -1, -1, -1}, 0, 0, {0, 0}, 0, 0};
+
+static void smk_fader(int i, int v)                /* fader i (0..3) at v (0..127) */
+{
+    if (proj.mode) {
+        int n = 4 + i, d;                          /* the Volume page: knobs 4..7, 0..100 in every scene */
+        if (!amb.sc)
+            return;
+        d = (v * 100 + 63) / 127 - amb.kv[n];
+        if (d)
+            amb_turn(n, -1, d);                    /* (as a turn of d steps: its page shown, the mood a tweak) */
+    } else {
+        int p = VIEW_KNOB[V_HOME][i];
+        const fm_param_t *pi = fm_param_info(p);
+        knob_set(p, pi->lo + (v * (pi->hi - pi->lo) + 63) / 127);
+        if (ui.view != V_HOME)
+            set_view(V_HOME);
+        ui.touched = (int8_t)i;
+        ui.touch_until = plat_ms() + 1200u;
+        ui.act_t = plat_ms();
+    }
+}
+
+static void smk_wheels(void)
+{
+    int32_t pw, mw;
+    int w;
+    if (proj.mode) {                               /* a scene: let go of what the instrument held */
+        for (w = 0; w < 2; w++)
+            if (smk.bend[w]) {
+                smk.bend[w] = 0;
+                fm_bend(w, 0, 0);
+            }
+        if (smk.vib) {
+            smk.vib = 0;
+            fm_ornament(ORN_VIB, 0);
+        }
+        (void)plat_wheels(&pw, &mw);
+        return;
+    }
+    if (!plat_wheels(&pw, &mw))
+        return;
+    for (w = 0; w < 2; w++) {                      /* BEND_DOWN (wheel down), BEND_UP (wheel up) */
+        int32_t x = w ? pw : -pw;
+        if (!smk.bend[w] && x > SMK_WHEEL_ON) {
+            smk.bend[w] = 1;
+            fm_bend(w, 1, 1);
+        } else if (smk.bend[w] && x < SMK_WHEEL_OFF) {
+            smk.bend[w] = 0;
+            fm_bend(w, 0, any_key_held());
+        }
+    }
+    if (!smk.vib && mw > SMK_WHEEL_ON) {
+        smk.vib = 1;
+        fm_ornament(ORN_VIB, 1);
+    } else if (smk.vib && mw < SMK_WHEEL_OFF) {
+        smk.vib = 0;
+        fm_ornament(ORN_VIB, 0);
+    }
+    ui.act_t = plat_ms();
+}
+
+static void smk_input(void)
+{
+    uint32_t sb = plat_smk_buttons(), hit = sb & ~smk.sb;
+    int i, asleep = proj.mode && amb.asleep;
+    smk.sb = sb;
+    if (asleep && hit) {                           /* (a press only wakes) */
+        amb_wake();
+        return;
+    }
+    if (hit >> SB_LEFT & 1u) {
+        if (proj.mode)
+            amb_page(plat_ms() < amb.touch_until ? amb.page - 1 : 0);
+        else
+            set_view((ui.view + NVIEWS - 1) % NVIEWS);
+    }
+    if (hit >> SB_RIGHT & 1u) {
+        if (proj.mode)
+            amb_page(plat_ms() < amb.touch_until ? amb.page + 1 : 0);
+        else
+            set_view((ui.view + 1) % NVIEWS);
+    }
+    if (hit && proj.mode) {
+        amb.welcome_until = 0;
+        amb.act_t = plat_ms();
+    }
+    if (smk.mode != proj.mode) {                   /* another mode: each fader takes over again once it moves */
+        smk.mode = proj.mode;
+        smk.live = 0;
+    }
+    for (i = 0; i < 4; i++) {
+        int v = plat_fader(i), d;
+        if (v < 0)
+            continue;
+        if (smk.fad[i] < 0 || asleep) {            /* (where it stands; asleep: nothing set) */
+            smk.fad[i] = (int16_t)v;
+            continue;
+        }
+        d = v - smk.fad[i];
+        if (!(smk.live >> i & 1u)) {
+            if (d < SMK_FADER_PICKUP && d > -SMK_FADER_PICKUP)
+                continue;
+            smk.live |= (uint8_t)(1u << i);
+        } else if (!d) {
+            continue;
+        }
+        smk.fad[i] = (int16_t)v;
+        smk_fader(i, v);
+    }
+    smk_wheels();
+}
+
+/* the pads' lights: the white keys, each pad always lit while the lights are on. The instrument: as the FM-1's
+ * key lights, the tonics (mi) light blue, a key sounding bright; the rest dark orange. A scene: every pad dark
+ * orange (every white key sounds right in it). A pad or key held: bright. Lights off, or a scene asleep: dark */
+static const uint8_t SMK_OFF[3] = {110, 38, 0}, SMK_ON[3] = {40, 120, 210}, SMK_ACT[3] = {190, 230, 255};
+static void smk_pads(void)
+{
+    int w;
+    for (w = 0; w < FM_NWHITE; w++) {
+        const uint8_t *c = SMK_OFF;
+        if (ui.keys >> WHITE_K[w] & 1u)
+            c = SMK_ACT;
+        else if ((proj.mode && amb.asleep) || !proj.leds)
+            c = 0;
+        else if (!proj.mode && fm_key_level[w] > 0.15f)
+            c = SMK_ACT;
+        else if (!proj.mode && w % 5 == 0)
+            c = SMK_ON;
+        plat_pad_rgb(PLAT_PAD_OF_WHITE(w), c ? c[0] : 0, c ? c[1] : 0, c ? c[2] : 0);
+    }
+}
+#endif
 
 void ui_init(void)
 {

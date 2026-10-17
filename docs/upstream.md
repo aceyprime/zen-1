@@ -15,6 +15,8 @@ one) and fails if they differ. One line
 may differ: the USB product name in `firmware/src/usb.c` (`STR2`, "ZEN-1 FM-1" for FoMni's "FoMni FM-1", the same
 length). It
 needs that commit's objects: `git remote add fomni https://github.com/charlesvestal/fm1-fomni && git fetch fomni`.
+The SMK-37 target (`SMK37.md`) changes some of the protected files; the guard takes each of those only as the version
+it records (`SMK37_FILES`).
 
 For reference, unmodified FoMni at that commit builds to `build/omni.fwsc`, 609657 B, identity `FM-1_800`, SHA-256
 `dc0759191447442db64eabbbf25f7a1e1a2a7746501f01402a7ebd1cd1446723` (JieLi toolchain

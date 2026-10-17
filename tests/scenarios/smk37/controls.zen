@@ -1,0 +1,160 @@
+# The SMK-37 build's own controls (build/host/zen_host_smk37): the pads and their lights, the outer keys, < >, the
+# faders (a scene's Volume page, the instrument's HOME page; each takes over once it moves), the wheels (the
+# instrument's bend and vibrato). ZEN-1 boots into Sakura.
+wait 800
+wait 2000
+expect mode 1
+# a scene: every pad lit dark orange
+expect padr0 110
+expect padg0 38
+expect padb0 0
+expect padr15 110
+shot smk-sakura.png
+# the pads are the white keys, low notes on the bottom row: pad 8 (bottom left) white key 0, pad 0 (top left) 8
+pad 8
+wait 20
+expect keynote 3
+pad 0
+wait 20
+expect keynote 11
+pad 15
+wait 20
+expect keynote 10
+# a pad held: bright; let go: dark orange again
+pad 9 down
+wait 50
+expect padr9 190
+expect padg9 230
+expect padb9 255
+pad 9 up
+wait 50
+expect padr9 110
+# the outer keys play an octave in: C3 as C4 (white key 4), C6 as C5 (white key 11)
+kbkey 0
+wait 20
+expect keynote 7
+kbkey 36
+wait 20
+expect keynote 14
+kbkey 12
+wait 20
+expect keynote 7
+# < >: the knob pages (as SEL / FX): the first shows the scene's page, the next ones step
+sbtn RIGHT
+expect page 0
+sbtn RIGHT
+expect page 1
+sbtn RIGHT
+expect page 2
+sbtn LEFT
+expect page 1
+# the faders: the Volume page (Notes, Drone, Air, Water). A fader takes over only once it moves
+expect knob4 80
+fader 0 65
+wait 50
+expect knob4 80
+fader 0 127
+wait 50
+expect knob4 100
+fader 0 0
+wait 50
+expect knob4 0
+fader 1 100
+wait 50
+expect knob5 79
+fader 3 32
+wait 50
+expect knob7 25
+expect page 1
+shot smk-faders.png
+# a scene: the wheels do nothing
+wheel pitch 127
+wheel mod 127
+wait 50
+expect smkbend 0
+expect smkvib 0
+wheel pitch 0
+wheel mod 0
+wait 50
+# the instrument (PATCH held): the faders take over again only once they move; HOME's page
+press HOME
+wait 800
+release HOME
+wait 100
+expect mode 0
+# the instrument: the tonics light blue, the rest dark orange
+expect padr8 40
+expect padb8 210
+expect padr9 110
+expect padr13 40
+fader 2 65
+wait 50
+expect par12 80
+fader 2 30
+wait 50
+expect par12 24
+fader 2 127
+wait 50
+expect par12 100
+expect view 0
+sbtn RIGHT
+expect view 1
+sbtn RIGHT
+expect view 2
+sbtn LEFT
+sbtn LEFT
+expect view 0
+sbtn LEFT
+expect view 3
+sbtn RIGHT
+expect view 0
+fader 3 33
+wait 50
+expect par26 55
+fader 3 10
+wait 50
+expect par26 8
+# a pad plays the koto, bright while it sounds
+pad 10 down
+wait 300
+expect nvoices >0
+expect keylevel2 >5
+expect padr10 190
+# the pitch wheel bends what sounds (as OCT+ / OCT- held), back at rest
+wheel pitch 127
+wait 300
+expect smkbend 2
+expect bend10 >950
+wheel pitch 0
+wait 600
+expect smkbend 0
+expect bend10 0
+wheel pitch -127
+wait 300
+expect smkbend 1
+expect bend10 <-100
+wheel pitch 0
+wait 600
+expect bend10 0
+# the mod wheel: vibrato while it is up
+wheel mod 100
+wait 50
+expect smkvib 1
+wheel mod 0
+wait 50
+expect smkvib 0
+pad 10 up
+wait 3000
+shot smk-koto.png
+# back to the scene: the wheels let go
+wheel mod 127
+wait 50
+expect smkvib 1
+press HOME
+wait 800
+release HOME
+wait 100
+expect mode 1
+expect smkvib 0
+wheel mod 0
+wait 50
