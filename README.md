@@ -73,7 +73,7 @@ See [BUILDING.md](BUILDING.md) and [docs/dev-environment.md](docs/dev-environmen
 ```
 tests/run_tests.sh                    # host tests, the simulator scenarios, the browser build, the tools
 ./build.sh                            # build/zen1.fwsc (Docker, JieLi toolchain)
-./build.sh --release 1.0           # a release package, build/zen-1-1.0.fwsc
+./build.sh --release 1.0.1         # a release package, build/zen-1-1.0.1.fwsc
 web/emu/build.sh                      # the browser emulator, and the audition bench for developers (Emscripten)
 build/host/zen_host SCRIPT OUTDIR    # the whole app on a computer, from a script (tests/scenarios/*.zen)
 tools/site_gallery.sh                 # the site's screenshots, from the simulator

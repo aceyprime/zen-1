@@ -720,22 +720,28 @@ static uint8_t sk_ref_of(uint8_t c)
     return 0;
 }
 #define SK_REFROWS 48.0f                    /* how far toward us the reflections reach */
-SC_SMALL static void sk_reflect(surf_t *s, float k)
+/* the far bank mirrored: drawn before our tree and bank, so the water shows the far bank behind the trunk too (the
+ * trunk stands on our side, in front of the river: it hid its stretch of the reflection and cut a wedge in it) */
+SC_SMALL static void sk_mirror(surf_t *s, float k)
 {
     int32_t x, y, W = s->w, wy = (int32_t)(SK_WATER * k), ye = (int32_t)((SK_WATER + SK_REFROWS) * k);
-    int i;
     for (y = wy; y < ye && y < s->h; y++) {
         float u = (float)(y - wy) / (float)(ye - wy);   /* (whole near the wall, thinning out toward us) */
         int32_t ys = 2 * wy - y - 1, fade = u < 0.45f ? 16 : (int32_t)(16.0f * (1.0f - (u - 0.45f) / 0.55f));
         uint8_t *p = s->px + y * W;
         const uint8_t *q = s->px + (ys < 0 ? 0 : ys) * W;
-        for (x = sk_fgx[y < 240 ? y : 239]; x < W; x++) {
+        for (x = 0; x < W; x++) {                     /* (the whole row: the water behind the trunk too) */
             uint8_t r = sk_ref_of(q[x]);
             if (r && (p[x] >= SK_WAT && p[x] < SK_WAT + 16) && (fade >= 16 || r8_dith(x, y, fade)))
                 p[x] = r;
         }
     }
-    for (i = 0; i < 9; i++) {                         /* the shallows: stones along our bank, under the water */
+}
+SC_SMALL static void sk_reflect(surf_t *s, float k)    /* the shallows: stones along our bank, under the water */
+{
+    int32_t x, y, W = s->w;
+    int i;
+    for (i = 0; i < 9; i++) {
         float yw = 222.0f + 16.0f * sc_frand(), rx = 2.5f + 2.5f * sc_frand(), ry = 1.0f + 0.9f * sc_frand(), xw;
         int32_t yy = (int32_t)(yw * k), xa, xb, cy;
         if (yy >= s->h)
@@ -939,6 +945,7 @@ SC_SMALL static void sk_background(void)
     sk_far_bank(s, k);                                /* the hills, the far bank and its wall */
     sk_far_trees(s, k);
     r8_vgrad(s, wy, s->h, SK_WAT, 16);               /* (the light on it: drawn each frame, sk_draw) */
+    sk_mirror(s, k);                                  /* (the far bank in the water, before anything of ours) */
     sk.ntip = 0;
     sk_flare = 1.35f;
     sk_branch(s, k, 26.0f, 150.0f, 0.17f, 46.0f * SK_CROWN, 15.0f, 6);   /* the crown, leaning out over the pond */
@@ -955,8 +962,8 @@ SC_SMALL static void sk_background(void)
         const uint8_t *p = s->px + y * W;
         int32_t b = 0;
         if (y >= wy && y < s->h)
-            for (x = 0; x < W; x++)               /* (the strip along the foot: across) */
-                if ((uint8_t)(p[x] - SK_WAT) >= 16u)
+            for (x = 0; x < W; x++)               /* (the strip along the foot: across; the reflection is water) */
+                if (!sk_wet(p[x]))
                     b = x + 1;
         sk_fgx[y] = (uint8_t)b;
     }
@@ -968,7 +975,7 @@ SC_SMALL static void sk_background(void)
             sk_shade[i] = (uint8_t)(sk_bcnt[sx] * 9 > 255 ? 255 : sk_bcnt[sx] * 9);
         }
     }
-    sk_reflect(s, k);                                 /* (after the trunk and the bank's edge are known: sk_fgx) */
+    sk_reflect(s, k);                                 /* (the stones: after the bank's edge is known, sk_fgx) */
     sk_stones(s, k);
     sc_seed(sk.seed * 2654435761u + 1u);              /* the world's randomness, apart from the picture's */
 }
@@ -2108,12 +2115,14 @@ static void sk_draw(void)
             int off = (int)fm_floorf(1.25f * sk_sin(((float)y / k) * 0.55f + sk.t * 0.35f) + 0.5f);
             const uint8_t *b = r8_bg.px + y * W;
             uint8_t *p = s->px + y * W;
-            int32_t x0 = sk_fgx[y < 240 ? y : 239];
             if (!off)
                 continue;
-            for (x = x0; x < W; x++) {
+            for (x = 0; x < W; x++) {                 /* (the whole row, the water behind the trunk too; the trunk and
+                                                       * the bank left as they are) */
                 int32_t sx = x - off;
-                uint8_t c = b[sx < x0 ? x0 : sx >= W ? W - 1 : sx];
+                uint8_t c = b[sx < 0 ? 0 : sx >= W ? W - 1 : sx];
+                if ((uint8_t)(p[x] - SK_WAT) >= 16u && (uint8_t)(p[x] - SK_REF) >= 16u)
+                    continue;
                 if (c >= SK_REF && c < SK_REF + 16)
                     p[x] = c;
                 else if (p[x] >= SK_REF && p[x] < SK_REF + 16)
@@ -2134,7 +2143,7 @@ static void sk_draw(void)
             uint32_t ph1, ph2, i1 = (uint32_t)(4294967296.0f / (lam * k)), i2 = (uint32_t)(4294967296.0f / (lam * 0.62f * k));
             int th = (int)(110.0f - 30.0f * near), dv = 0, by = 0, mk = 0, rw = SK_WAT + ((y - wy) * 15) / (s->h - wy);
             uint8_t *p = s->px + y * W;
-            int32_t x0 = sk_fgx[y < 240 ? y : 239];   /* (from the bank and the trunk on) */
+            int32_t x0 = 0;                           /* (the whole row: only water is touched) */
             /* ripple marks: short dashes along the flow, finer far off, sliding downstream (lighter near, where they
              * catch the sky; darker far); a row's own phase so they never line up */
             float lm = 2.6f + 7.0f * near, pm = -sk.t * v * 0.9f / lm + (float)((uint32_t)y * 2654435761u >> 20) * (1.0f / 4096.0f);
