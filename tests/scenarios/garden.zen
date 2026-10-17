@@ -1,0 +1,32 @@
+# (after AMB-1) the drone breathes (three voices, each on its own cycle, now and then one sits a breath
+# out), the notes rest now and then, Melody: Loops chooses the notes, and the arc swings the whole slowly
+wait 800
+expect scene 0
+wait 60000
+expect breaths >9
+expect drones >0
+wait 540000
+expect quiets >0
+# a rest is 8-18 s: never more than ~22 s with no note in ten minutes
+expect notegap <23
+expect sits >0
+expect drones >0
+# MOOD: Melody to Loops: the scene's notes from the four loops
+expect knob14 0
+expect knob15 50
+tap FX
+tap FX
+tap FX
+tap FX
+spin K3 1
+expect knob14 1
+wait 120000
+expect loopnotes >5
+# Arc to 0: the tide flat
+spin K4 -100
+expect knob15 0
+wait 2000
+expect arc 0
+expect stale 0
+expect race 0
+expect textfit 0

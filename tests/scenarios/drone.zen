@@ -1,0 +1,338 @@
+# the drone stays low and warm in every key and scale: its root 190..300 Hz (or the nearest
+# octave, never under 150 Hz), its upper note never above 400 Hz. (the player's key and scale
+# set by the host, keystep / scalestep: in a scene SELECT and ALGORITHM turn Activity and the Mood)
+keystep -1
+wait 80
+keystep -1
+wait 80
+keystep -1
+wait 80
+keystep -1
+wait 80
+keystep -1
+wait 80
+keystep -1
+wait 80
+keystep -1
+wait 80
+keystep -1
+wait 80
+keystep -1
+wait 80
+keystep -1
+wait 80
+keystep -1
+wait 80
+keystep -1
+wait 80
+keystep -1
+wait 80
+keystep -1
+wait 80
+keystep -1
+wait 80
+keystep -1
+wait 80
+expect par0 0
+expect par0 0
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 1
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 2
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 3
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 4
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 5
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 6
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 7
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 8
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 9
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 10
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 11
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 12
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 13
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 14
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 15
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+scalestep 1
+wait 80
+expect par1 1
+expect par0 15
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep -1
+wait 80
+expect par0 14
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep -1
+wait 80
+expect par0 13
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep -1
+wait 80
+expect par0 12
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep -1
+wait 80
+expect par0 11
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep -1
+wait 80
+expect par0 10
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep -1
+wait 80
+expect par0 9
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep -1
+wait 80
+expect par0 8
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep -1
+wait 80
+expect par0 7
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep -1
+wait 80
+expect par0 6
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep -1
+wait 80
+expect par0 5
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep -1
+wait 80
+expect par0 4
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep -1
+wait 80
+expect par0 3
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep -1
+wait 80
+expect par0 2
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep -1
+wait 80
+expect par0 1
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep -1
+wait 80
+expect par0 0
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+scalestep 1
+wait 80
+expect par1 2
+expect par0 0
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 1
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 2
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 3
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 4
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 5
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 6
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 7
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 8
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 9
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 10
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 11
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 12
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 13
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 14
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+keystep 1
+wait 80
+expect par0 15
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+# OCT+ / OCT- (the scene's octave): the drone stays where it was
+tap OCT+
+wait 100
+expect par6 1
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330
+tap OCT-
+tap OCT-
+wait 100
+expect par6 -1
+expect dronetop <401
+expect dronelow >150
+expect dronelow <330

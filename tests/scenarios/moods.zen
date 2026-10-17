@@ -1,0 +1,131 @@
+# Moods (after Avonlea; Mood first on the scene's page, Natural the default: the day goes round; a
+# named mood holds its time and character; Custom once a knob is turned), Warmth (bright to mellow), Hotaru's
+# Weather (Auto, Clear, Mist, Rain; on the Nature page); kept across a power-off; star glints heard
+wait 800
+expect scene 0
+expect knob0 0
+expect knob11 0
+# Sakura: Natural -> Morning (lively), then on to Night (sparse, mellow; after Golden Hour)
+spin K1 1
+expect knob0 1
+expect knob1 45
+expect knob4 80
+spin K1 3
+expect knob0 4
+expect knob1 12
+expect knob11 40
+# Warmth by hand (Music, KNOB 2): the mood keeps it (every mood its own tweaks; no Custom)
+tap FX
+tap FX
+tap FX
+spin K2 10
+expect knob11 50
+expect knob0 4
+expect tweaks 16
+# another mood is as it was made; back to Night: the tweak is there
+tap FX
+spin K1 2
+expect knob0 0
+expect knob11 0
+spin K1 -1
+expect resetm 4
+spin K1 -1
+expect knob0 4
+expect resetm -1
+expect knob11 50
+# kept across a power-off
+tap SAVE
+wait 300
+reboot
+wait 800
+expect knob0 4
+expect knob11 50
+expect tweaks 16
+# turned past it onto "Reset Night" and left there 2 s: Night as it was made
+spin K1 1
+expect resetm 4
+wait 2500
+expect resetm -1
+expect knob0 4
+expect knob11 40
+expect tweaks 0
+# ALGORITHM turns the Mood and SELECT Activity, from any page; a turn of Activity: Golden's own
+tap FX
+spin ALGO -1
+expect knob0 3
+expect knob1 20
+spin SELECT 5
+expect knob1 25
+expect knob0 3
+expect tweaks 8
+wait 400
+spin ALGO -1
+expect knob0 2
+# Koi: Rain on the Pond (the moods as the day meets them: Natural, Feeding, Rain, Still Pond, Night): the water is the
+# recorded rain (the eighth of its list), sparse
+spin PRESET 1
+wait 1200
+expect scene 1
+spin K1 2
+expect knob0 2
+expect knob9 7
+expect knob1 15
+# rain seen landing on the pond, and heard where it lands
+wait 15000
+expect rainnow >90
+expect raindrops >20
+expect knob13 30
+# Hotaru: Mist, then Rain (Nature, KNOB 2); the filter deepens with them; glints heard on a clear night
+spin PRESET 1
+wait 1200
+expect scene 2
+tap FX
+tap FX
+tap FX
+spin K1 2
+expect knob13 2
+wait 60000
+expect wx 1
+expect depthsent >20
+spin K1 1
+expect knob13 3
+# (rain "keeps falling" on switching back) a weather chosen by hand comes in a few seconds
+# a few drops first, each on its own, then more
+wait 2000
+expect dropson <8
+wait 4000
+expect rainnow >95
+# (photos: 33 fps in rain) the drops step every other frame, and only what changed is sent, not
+# the blocks across from it: well under a quarter of the screen a frame (~60 %)
+expect sentavg >-1
+wait 5000
+expect sentavg <25
+expect dropson >30
+wait 54000
+expect wx 2
+spin K1 -2
+expect knob13 1
+wait 6000
+expect rainnow <5
+wait 114000
+expect wx 0
+expect depthsent 0
+expect pings >0
+# a mood sets the weather too: Dusk (the first, as the night meets them) is a clear night. Natural keeps the weather turned by hand (its
+# tweak: Clear) until it is reset to Auto, as made
+tap FX
+spin K1 1
+expect knob0 0
+expect resetm 0
+spin K1 1
+expect knob0 1
+expect knob13 1
+spin K1 -1
+expect knob0 0
+expect knob13 1
+expect resetm 0
+wait 2500
+expect knob13 0
+expect tweaks 0
+expect stale 0
+expect race 0

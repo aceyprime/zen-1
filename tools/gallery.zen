@@ -1,0 +1,109 @@
+# the site's gallery (tools/site_gallery.sh): each scene, mood by mood, from the host simulator. A mood is reached
+# in 30 s; the knobs' bar is gone 3 s after a turn. The expects make sure each picture is what its name says.
+wait 800
+# Sakura: Natural, Morning, Afternoon, Golden Hour, Night
+spin K1 1
+expect knob0 1
+wait 33000
+shot sakura-morning.png
+spin K1 1
+expect knob0 2
+wait 33000
+shot sakura-afternoon.png
+spin K1 1
+expect knob0 3
+wait 33000
+shot sakura-golden.png
+spin K1 1
+expect knob0 4
+wait 33000
+shot sakura-night.png
+spin K1 -3
+expect knob0 1
+wait 33000
+tap GLO
+wait 1500
+shot sakura-pixel.png
+tap GLO
+wait 1500
+# Koi: Natural, Feeding, Rain, Still Pond, Night
+spin PRESET 1
+wait 6000
+expect scene 1
+shot koi-day.png
+spin K1 1
+expect knob0 1
+wait 33000
+shot koi-feeding.png
+tap GLO
+wait 1500
+shot koi-pixel.png
+tap GLO
+wait 1500
+spin K1 1
+expect knob0 2
+wait 33000
+shot koi-rain.png
+spin K1 1
+expect knob0 3
+wait 33000
+shot koi-still.png
+spin K1 1
+expect knob0 4
+wait 33000
+shot koi-night.png
+tap HOME
+wait 400
+shot status-card.png
+wait 3000
+# Hotaru: Natural, Dusk, Quiet Night, Festival, Deep Night; then rain and mist (the Nature page's Weather, its first knob)
+spin PRESET 1
+wait 6000
+expect scene 2
+spin K1 1
+expect knob0 1
+wait 33000
+shot hotaru-dusk.png
+tap GLO
+wait 1500
+shot hotaru-pixel.png
+tap GLO
+wait 1500
+spin K1 1
+expect knob0 2
+wait 33000
+shot hotaru-festival.png
+spin K1 1
+expect knob0 3
+wait 33000
+shot hotaru-quiet.png
+spin K1 1
+expect knob0 4
+wait 33000
+shot hotaru-deep.png
+spin K1 -1
+expect knob0 3
+wait 33000
+tap FX
+tap FX
+tap FX
+spin K1 3
+expect knob13 3
+wait 33000
+shot hotaru-rain.png
+spin K1 -1
+expect knob13 2
+wait 33000
+shot hotaru-mist.png
+# the knobs' bar: the scene's page; the Mood's dot says it is tweaked (its weather); the bar has gone, so FX shows the scene's page
+tap FX
+wait 300
+shot knobs.png
+wait 4000
+# the instrument (FuMi-1's koto): HOME held
+press HOME
+wait 800
+release HOME
+wait 1500
+expect mode 0
+shot instrument.png

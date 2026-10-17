@@ -1,0 +1,49 @@
+# ambient mode (ZEN-1), in a scene: HOME held enters the scene and leaves it; the scene sounds by itself; the keys
+# and knobs are the scene's; ENV switches the style; the mode survives a save and a reboot
+wait 500
+# ZEN-1 boots into the scene; HOME held: the instrument, and again: the scene
+expect mode 1
+press HOME
+wait 800
+release HOME
+wait 50
+expect mode 0
+press HOME
+wait 800
+release HOME
+wait 50
+expect mode 1
+expect view 0
+# PRESETS: from Sakura (the first scene) back round to Hotaru (the last)
+spin PRESET -1
+wait 6000
+expect scene 2
+shot hotaru-painterly.png
+expect nvoices >1
+expect peak_db_max >-80
+tapkey w8
+wait 400
+expect released 1
+tap GLO
+wait 1500
+expect style 1
+shot hotaru-pixel.png
+tap SAVE
+wait 2000
+reboot
+wait 1500
+expect mode 1
+expect style 1
+# the last scene comes back at power-on
+expect scene 2
+shot hotaru-reboot.png
+press HOME
+wait 800
+release HOME
+wait 2500
+expect mode 0
+expect nvoices 0
+shot instrument-again.png
+# only what changed is sent to the screen; the screen as sent always matches the frame as drawn
+expect stale 0
+expect race 0

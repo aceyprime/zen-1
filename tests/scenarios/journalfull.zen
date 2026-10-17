@@ -1,0 +1,902 @@
+# the journal full: a session of many saves (one session had 65: 22 dropouts, every save after the ~32
+# prepared slots erasing OBJ_PROJ). Now 56 are prepared, and a full journal reclaims a sector of itself in a quiet
+# moment: OBJ_PROJ is never erased, the newest save always wins, and a power cut mid-save still leaves the one before
+wait 800
+press HOME
+wait 800
+release HOME
+wait 100
+expect mode 0
+expect jr_reclaims 0
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+# 80 saves: the journal has been reclaimed at least once, and never fell back to OBJ_PROJ
+expect jr_reclaims >0
+expect store_writes 0
+expect par0 4
+turn SELECT 3 80
+wait 100
+tap SAVE
+wait 50
+expect par0 7
+reboot
+wait 1500
+press HOME
+wait 800
+release HOME
+wait 100
+expect par0 7
+# after the reboot: 63 slots free (every sector but the newest record's erased). 63 saves fill them; the 64th reclaims
+# a sector first, and a power cut in that save leaves the 63rd
+expect jr_free 63
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+expect par0 8
+expect jr_free 0
+expect jr_reclaims 0
+turn SELECT -1 80
+wait 70
+jrtear 2
+tap SAVE
+wait 30
+expect jr_reclaims 1
+reboot
+wait 1500
+press HOME
+wait 800
+release HOME
+wait 100
+expect par0 8
+expect store_writes 0
+# and saving goes on after the reclaim
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+reboot
+wait 1500
+press HOME
+wait 800
+release HOME
+wait 100
+expect par0 7
+# a scene with the journal full: its save waits for the breath (90 s after the last turn), reclaims in the silence
+expect jr_free 63
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+expect jr_free 0
+press HOME
+wait 800
+release HOME
+wait 500
+expect mode 1
+spin K2 20
+wait 30000
+expect jr_reclaims 0
+wait 65000
+expect jr_reclaims 1
+expect dirty 0
+expect store_writes 0
+expect knob1 45
+reboot
+wait 1500
+expect mode 1
+expect knob1 45

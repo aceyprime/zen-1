@@ -1,0 +1,63 @@
+# a scene's knobs: FX steps the pages (the scene's, MIX, MORE); the levels move; the knobs are saved by themselves a few seconds
+# after the last turn (behind a dip in the level), and are as they were after a reboot
+# (ZEN-1 boots into the scene)
+wait 800
+wait 2000
+expect knob1 25
+expect knob6 30
+wait 100
+shot mix-page.png
+tap FX
+tap FX
+spin K3 -20
+spin K1 -10
+wait 100
+expect knob6 10
+expect knob4 70
+# Music: Echo
+wait 100
+shot more-page.png
+tap FX
+tap FX
+spin K1 -40
+expect knob10 0
+# Nature: Air Type and Water Type, under their levels
+tap FX
+tap FX
+tap FX
+# Water is: Brook by default (1); Bubbles (0) to the left, White noise (2) to the right; Air is: Soft (0)
+expect knob9 1
+expect knob8 0
+spin K4 -1
+expect knob9 0
+shot more-bubbles.png
+spin K3 2
+expect knob8 3
+# switching Water back and forth (comparing the streams) never pauses the sound: the saves go to the journal
+# 20 s after the last change, with no sector erase (store_writes stays 0)
+wait 3000
+spin K4 1
+wait 3000
+spin K4 1
+expect knob9 2
+wait 15000
+expect dirty 1
+wait 7000
+expect dirty 0
+expect store_writes 0
+# FX, after the bar has gone: the scene's page
+tap FX
+spin K2 20
+expect knob1 45
+wait 15000
+expect dirty 1
+wait 7000
+expect dirty 0
+expect store_writes 0
+reboot
+wait 1500
+expect mode 1
+expect knob1 45
+expect knob4 70
+expect knob6 10
+expect knob10 0

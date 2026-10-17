@@ -1,0 +1,29 @@
+# the picture: PLAY grows a new one through a fade; the night grows another. (no keeping one:
+# REC has no use in a scene, and its light is dark)
+# (ZEN-1 boots into the scene)
+wait 800
+wait 2000
+expect mode 1
+expect regrows 0
+expect kept 0
+expect seed16 >-1
+tap PLAY
+wait 250
+expect fade <200
+wait 1200
+expect regrows 1
+expect fade 256
+expect seed16 3345
+shot regrown.png
+# REC: nothing kept, nothing saved, the light dark
+tap REC
+wait 2000
+expect kept 0
+# (REC glows dim in testing builds, as the tests run: it shows the load readout; dark in a release)
+expect ledREC 1
+expect regrows 1
+# after a reboot: nothing kept
+reboot
+wait 1500
+expect mode 1
+expect kept 0

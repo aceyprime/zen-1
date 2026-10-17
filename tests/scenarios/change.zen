@@ -1,0 +1,28 @@
+# Natural: the scale follows the light (Yo by day, Min'yo from golden hour through the night: a scene's notes all sound
+# well over its chords), and every third dawn the key may move a fourth or fifth, never more than a fifth from the
+# instrument's; the instrument's own key and scale are untouched, and back in the engine on leaving
+# (ZEN-1 boots into the scene: Sakura, Natural, a morning)
+wait 800
+expect scalecur 1
+expect par1 0
+# fifteen dawns at once: five chances for the key to move
+dawns 15
+wait 20000
+expect changes >1
+expect keyoff >-701
+expect keyoff <701
+expect par0 4
+expect par1 0
+shot drifted.png
+# the night: Min'yo (taken when the notes rest, within a minute anyway)
+dayat 0.7
+wait 61000
+expect scalecur 2
+# the instrument: its key and scale, as saved
+press HOME
+wait 800
+release HOME
+wait 200
+expect mode 0
+expect par1 0
+expect key1cents -2320

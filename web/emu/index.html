@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZEN-1 in the browser</title>
+<meta name="description" content="ZEN-1, ambient custom firmware for the M-VAVE FM-1, in your browser: the same code the FM-1 runs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Semi+Condensed:wght@600;700&display=swap">
+<style>
+/* light: the coral, teal and brown darkened just enough for 4.5:1 on the cream */
+:root { --ground: #faf4e8; --ink: #48392f; --muted: #6e5c4b; --rule: #e6dccb; --accent: #b84a1e; --teal: #1d7d74; --card: #fffaf1; --focus: #1f6fd1; color-scheme: light; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --ground: #1c1814; --ink: #f2e8d8; --muted: #b3a28e; --rule: #3a322a; --accent: #f28a5a; --teal: #4cc3b6; --card: #26201b; --focus: #79adff; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --ground: #1c1814; --ink: #f2e8d8; --muted: #b3a28e; --rule: #3a322a; --accent: #f28a5a; --teal: #4cc3b6; --card: #26201b; --focus: #79adff; color-scheme: dark; }
+body { background: var(--ground); color: var(--ink); margin: 0; padding-inline: 16px; padding-block: 28px 48px;
+       font: 400 16px/1.55 "Barlow", "Helvetica Neue", Arial, sans-serif; }
+main { max-width: 1040px; margin: 0 auto; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem 1.2rem; margin: 0 0 1rem; }
+h1 { font: 700 2rem/1.1 "Barlow Semi Condensed", "Barlow", sans-serif; margin: 0; }
+header p { margin: 0; color: var(--muted); }
+header nav { margin-left: auto; display: flex; gap: 1rem; }
+a { color: var(--accent); }
+.device { position: relative; width: 100%; aspect-ratio: 1000 / 640; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+.device svg { pointer-events: none; }
+.hit { position: absolute; touch-action: none; cursor: pointer; -webkit-tap-highlight-color: transparent; border-radius: 12px; }
+.hit.knob { cursor: ns-resize; border-radius: 50%; }
+.hit:focus-visible { outline: 3px solid #79adff; outline-offset: 2px; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.bar label { display: inline-flex; gap: .35rem; align-items: center; cursor: pointer; }
+footer { max-width: 1040px; margin: 2rem auto 0; color: var(--muted); font-size: .92rem; }
+.device svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.device canvas { position: absolute; left: 31.8%; top: 9.6875%; width: 20%; height: 31.25%; image-rendering: pixelated; background: #000; border-radius: 2px; }
+.ctl { cursor: pointer; }
+.ctl.knob { cursor: ns-resize; }
+.btnface { transition: fill .06s; }
+.lit .btnface { fill: #f28a5a; }
+.lit text.btn { fill: #2a140a; }
+.held .btnface, .held .keyface { stroke: #f28a5a; stroke-width: 3; }
+.latched .btnface { stroke: #6fc3ff; stroke-width: 3; }
+.keyface { transition: fill .06s; }
+.lit .keyface.white { fill: #f6b48e; }
+.lit .keyface.black { fill: #4cc3b6; }
+.start { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(10, 11, 13, .55); border-radius: 4.4% / 6.9%; }
+.start button { font: 600 1.25rem "Barlow Semi Condensed", "Barlow", sans-serif; letter-spacing: .04em; padding: .7em 1.6em;
+                border-radius: 999px; border: 0; background: #f28a5a; color: #2a140a; cursor: pointer; }
+.start[hidden] { display: none; }
+.turn { display: none; margin: 0 0 .8rem; color: var(--muted); font-size: .92rem; }
+@media (orientation: portrait) and (max-width: 700px) { .turn { display: block; } }
+.start button:disabled { opacity: .6; cursor: progress; }
+.bar { display: flex; flex-wrap: wrap; gap: .5rem 1.2rem; align-items: center; margin: .9rem 0 0; color: var(--muted); font-size: .92rem; }
+.bar button { font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: .3em .8em; cursor: pointer; }
+.bar .cpu { font-variant-numeric: tabular-nums; }
+.help h2 { font: 600 1.1rem "Barlow Semi Condensed", "Barlow", sans-serif; margin: 0 0 .3rem; }
+.help { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem 2rem; margin: 1.6rem 0 0; }
+.help h2 { font: 600 1.1rem "Barlow Semi Condensed", "Barlow", sans-serif; margin: 0 0 .3rem; }
+.help p, .help ul { margin: 0; color: var(--muted); max-width: 60ch; }
+.help ul { padding-left: 1.1rem; }
+kbd { font: 600 .85em ui-monospace, Menlo, monospace; background: var(--card); border: 1px solid var(--rule); border-radius: 4px; padding: 0 .3em; color: var(--ink); }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>ZEN-1 <small lang="ja" style="font-weight:400;opacity:.6">禅</small></h1>
+  <p>living ambient scenes for the FM-1 (Sakura, Koi, Hotaru), with FuMi-1's koto as an instrument mode, in the browser: the same code the FM-1 runs</p>
+  <nav><a href="../">About</a><a href="__REPO__">Source</a></nav>
+</header>
+
+<p class="turn">Turn your phone sideways for bigger controls.</p>
+<div class="device" id="device">
+  <svg id="panel" viewBox="0 0 1000 640" aria-hidden="true"></svg>
+  <canvas id="screen" width="240" height="240" role="img" aria-label="The FM-1 screen: the scene's picture, or the instrument's page"></canvas>
+  <div class="start" id="start"><button id="go">Switch on</button></div>
+</div>
+
+<div class="bar">
+  <span id="status" role="status">Off. Sound starts when you switch it on.</span>
+  <span class="cpu" id="cpu"></span>
+  <button id="mute" type="button" aria-pressed="false">Mute</button>
+  <label><input type="checkbox" id="shortcuts" checked> Single-key shortcuts</label>
+  <button id="reset" type="button" title="Forget your settings and start again from the factory settings">Factory reset</button>
+</div>
+
+<section class="help">
+  <div>
+    <h2>Playing</h2>
+    <ul>
+      <li>It starts in a scene. <b>PRESETS</b> changes the scene (Sakura, Koi, Hotaru), <b>ALGORITHM</b> the Mood,
+        <b>SELECT</b> the Activity; <b>FX</b> steps the four pages of knobs (Scene, Volume, Nature, Music); <b>GLO</b> switches painterly / pixel art;
+        <b>PLAY</b> grows a new picture; a tap on <b>HOME</b> shows the battery, scene and mood; <b>SAVE</b> held 3 s goes back to the defaults; <b>HOME held</b> (<kbd>Esc</kbd>
+        held) switches to the instrument and back. White keys play the scene's instrument and the scene answers (petals,
+        koi food, a firefly); black keys are each scene's own (a harp, pebbles and the bamboo knock, firefly flashes and a
+        breeze). Everything the scenes do is in <a href="../guide/">the guide</a>. The rest of this list is the
+        instrument.</li>
+      <li><b>White keys</b> mi fa la ti do, three times, and a top mi: the ST-50's lower row. The tonics (keys 1, 6, 11, 16) are lit.</li>
+      <li><b>Black keys</b> the upper row (fa# sol ti-flat do# re), or ornaments when <b>SEQ</b> is on (vibrato, trill, damp, strong pluck).</li>
+      <li><b>SELECT</b> 本数 (the key), <b>PRESETS</b> the instrument, <b>ALGORITHM</b> the scale (IN, YO, MIN'YO).</li>
+      <li><b>KNOB 1–4</b> the four values on the screen: HOME 余韻, trill rate, vibrato depth, reverb; <b>FX</b> the sound page; <b>EDIT</b> the bend page.</li>
+      <li><b>LFO</b> vibrato, <b>ARP</b> trill, <b>GLO</b> mono / poly, <b>SEL</b> tap: 平均律 / 純正律, hold: the tuning page.</li>
+      <li><b>OCT−</b> / <b>OCT+</b> with a note held: bend down / up (sprung); with none: octave.</li>
+    </ul>
+  </div>
+  <div>
+    <h2>Mouse and touch</h2>
+    <ul>
+      <li>Drag a knob up or down, or use the scroll wheel over it.</li>
+      <li>Click or touch buttons and keys. Drag across the white keys for a glissando. Several fingers at once work on a touch screen.</li>
+      <li>Combinations with a mouse: <kbd>Shift</kbd>-click (or right-click) a button to hold it down, click again to let go.</li>
+    </ul>
+  </div>
+  <div>
+    <h2>Keyboard</h2>
+    <ul>
+      <li><kbd>Tab</kbd> moves through every knob, button and key; each says what it does. <kbd>Space</kbd> or
+        <kbd>Enter</kbd> holds a button or key down while you hold it; <kbd>Shift</kbd>+<kbd>Enter</kbd> keeps a button
+        down until pressed again. A knob turns with the arrow keys, <kbd>Page Up</kbd> / <kbd>Page Down</kbd> faster;
+        MASTER is a slider (<kbd>Home</kbd> / <kbd>End</kbd> too). A lit button or key says so.</li>
+      <li>The single-key shortcuts below work while the page or the panel has focus (not in a field), and the
+        switch under the panel turns them off.</li>
+      <li>White keys 1–8: <kbd>Q</kbd>–<kbd>I</kbd>, 9–16: <kbd>A</kbd>–<kbd>K</kbd>. Black keys 1–11: <kbd>1</kbd>–<kbd>0</kbd>, <kbd>-</kbd>.</li>
+      <li><kbd>Z</kbd> / <kbd>X</kbd> OCT− / OCT+ (the bend with a note held), <kbd>Shift</kbd> LFO (vibrato), <kbd>/</kbd> ARP (trill), <kbd>Esc</kbd> HOME.</li>
+      <li><kbd>↑</kbd> <kbd>↓</kbd> turn SELECT (in a scene: Activity; in the instrument: 本数).</li>
+    </ul>
+  </div>
+  <div>
+    <h2>Saving</h2>
+    <p>SAVE keeps your setup in this browser, as the FM-1 keeps it in its memory. Factory reset forgets it.
+      It is the firmware, not a recording: what you hear is ZEN-1 running, at the FM-1's 44.1 kHz.
+      The browser emulator comes from <a href="https://github.com/charlesvestal/fm1-fomni">FoMni</a>; the idea from <a href="https://www.groove-os.com/">Groove OS</a>.</p>
+  </div>
+</section>
+</main>
+<footer><p>ZEN-1 is GPL-3.0, no warranty. <a href="../">About ZEN-1</a> · <a href="__REPO__">Source</a></p></footer>
+
+<script>
+"use strict";
+const NS = "http://www.w3.org/2000/svg";
+const BTN = { FX: 0, SEL: 1, ENV: 2, LFO: 3, EDIT: 4, GLO: 5, HOME: 6, SAVE: 7, ARP: 8, SEQ: 9, PLAY: 10, REC: 11, "OCT-": 12, "OCT+": 13 };
+const ENC = { SELECT: 0, ALGORITHM: 1, PRESETS: 2, KNOB1: 3, KNOB2: 4, KNOB3: 5, KNOB4: 6 };
+const WHITE_K = [0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19, 21, 23, 24, 26];
+const BLACK_K = [1, 3, 5, 8, 10, 13, 15, 17, 20, 22, 25];
+const BLACK_AFTER = [0, 1, 2, 4, 5, 7, 8, 9, 11, 12, 14];
+const BODY = "#3a3d42", TRAY = "#26282c", KEY_W = "#d9dadc", KEY_B = "#c9cacd", KNOB = "#1f2124", BTNC = "#2e3135", LABEL = "#e8e8ea";
+const STORE_KEY = "zen1-emu-store";
+
+const svg = document.getElementById("panel");
+function el(tag, attrs, parent = svg) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  parent.appendChild(e);
+  return e;
+}
+function text(parent, x, y, s, size, fill = LABEL, weight = 600) {
+  const t = el("text", { x, y, "text-anchor": "middle", "font-family": "'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif",
+                         "font-size": size, "font-weight": weight, fill, "letter-spacing": ".05em", class: "btn", "pointer-events": "none" }, parent);
+  t.textContent = s;
+  return t;
+}
+
+// ---------------------------------------------------------------- the panel
+el("rect", { x: 4, y: 4, width: 992, height: 632, rx: 44, fill: BODY });
+const knobs = {};
+function knob(x, y, r, label, role) {
+  const name = label.replace(/^KNOB(\d)$/, "KNOB $1");
+  const g = el("g", role === "master"
+    ? { class: "ctl knob", tabindex: 0, role: "slider", "aria-label": name, "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": 68 }
+    : { class: "ctl knob", tabindex: 0, role: "button", "aria-roledescription": "knob", "aria-label": name });
+  el("circle", { cx: x, cy: y, r: r + 5, fill: TRAY }, g);
+  el("circle", { cx: x, cy: y, r, fill: KNOB, stroke: "#44474c", "stroke-width": 2 }, g);
+  const ind = el("line", { x1: x, y1: y - r + 5, x2: x, y2: y - r + 15, stroke: LABEL, "stroke-width": 3, "stroke-linecap": "round" }, g);
+  text(g, x, y - r - 12, label, 17);
+  el("circle", { cx: x, cy: y, r: r + 14, fill: "transparent" }, g);
+  knobs[label] = { g, ind, x, y, angle: 0, role };
+  return knobs[label];
+}
+knob(105, 100, 24, "MASTER", "master");
+knob(215, 100, 24, "SELECT", ENC.SELECT);
+knob(105, 205, 24, "PRESETS", ENC.PRESETS);
+knob(215, 205, 24, "ALGORITHM", ENC.ALGORITHM);
+for (let i = 0; i < 4; i++) knob(610 + i * 104, 100, 22, `KNOB${i + 1}`, ENC[`KNOB${i + 1}`]);
+
+const buttons = {};
+function button(x, y, w, h, label, two) {
+  const g = el("g", { class: "ctl", role: "button", tabindex: 0, "aria-label": two ? `${label} / ${two}` : label });
+  el("rect", { x, y, width: w, height: h, rx: 9, fill: BTNC, stroke: "#4a4d52", "stroke-width": 1.5, class: "btnface" }, g);
+  if (two) { text(g, x + w / 2, y + h / 2 - 1, label, 12); text(g, x + w / 2, y + h / 2 + 12, two, 12); }
+  else text(g, x + w / 2, y + h / 2 + 5, label, 15);
+  buttons[label] = { g, bit: BTN[label] };
+}
+el("rect", { x: 58, y: 258, width: 210, height: 58, rx: 14, fill: TRAY });
+button(72, 268, 82, 38, "OCT-"); button(170, 268, 82, 38, "OCT+");
+el("rect", { x: 300, y: 44, width: 236, height: 236, rx: 26, fill: "#111214" });
+el("rect", { x: 568, y: 160, width: 400, height: 140, rx: 18, fill: TRAY });
+const ROW1 = ["FX", "SEL", "ENV", "LFO", "EDIT", "GLO"], ROW2 = ["HOME", "SAVE", "ARP", "SEQ", "PLAY", "REC"];
+for (let i = 0; i < 6; i++) {
+  button(582 + i * 63, 174, 54, 48, ROW1[i]);
+  if (ROW2[i] === "PLAY") button(582 + i * 63, 236, 54, 48, "PLAY", "STOP"); else button(582 + i * 63, 236, 54, 48, ROW2[i]);
+}
+
+const keys = [];
+(function keybed(x0, y0, w, h) {
+  el("rect", { x: x0, y: y0, width: w, height: h, rx: 18, fill: TRAY });
+  const pitch = (w - 24) / 16, kw = pitch * 0.78;
+  for (let i = 0; i < 16; i++) {
+    const g = el("g", { class: "ctl", role: "button", tabindex: 0, "aria-label": `White key ${i + 1}` });
+    el("rect", { x: x0 + 12 + i * pitch + (pitch - kw) / 2, y: y0 + h * 0.43, width: kw, height: h * 0.52, rx: kw / 2, fill: KEY_W, class: "keyface white" }, g);
+    keys[WHITE_K[i]] = { g };
+  }
+  BLACK_AFTER.forEach((a, k) => {
+    const g = el("g", { class: "ctl", role: "button", tabindex: 0, "aria-label": `Black key ${k + 1}` });
+    el("rect", { x: x0 + 12 + (a + 1) * pitch - kw / 2, y: y0 + h * 0.06, width: kw, height: h * 0.33, rx: kw / 2, fill: KEY_B, class: "keyface black" }, g);
+    keys[BLACK_K[k]] = { g };
+  });
+})(36, 340, 928, 270);
+
+// ---------------------------------------------------------------- touch targets
+// The drawing is only a picture (pointer-events: none). Each control gets an invisible HTML target
+// over it: browsers (iOS Safari above all) honor touch-action and touchstart on HTML elements but
+// not on SVG ones, so the controls keep their touches while a finger anywhere else on the device
+// scrolls the page natively.
+const device = document.getElementById("device");
+function hit(c, cls) {
+  const b = c.g.getBBox(), d = document.createElement("div");
+  d.className = "hit" + (cls ? " " + cls : "");
+  Object.assign(d.style, { left: `${b.x / 10}%`, top: `${b.y / 6.4}%`, width: `${b.width / 10}%`, height: `${b.height / 6.4}%` });
+  for (const a of ["role", "aria-label", "tabindex", "aria-roledescription", "aria-valuemin", "aria-valuemax", "aria-valuenow"]) if (c.g.hasAttribute(a)) { d.setAttribute(a, c.g.getAttribute(a)); c.g.removeAttribute(a); }
+  if (c.g.hasAttribute("aria-description")) { d.title = c.g.getAttribute("aria-description"); d.setAttribute("aria-description", d.title); }
+  c.g.setAttribute("aria-hidden", "true");
+  d.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });
+  device.insertBefore(d, document.getElementById("start"));
+  c.hit = d;
+}
+// what each control does, on hover, in a scene and in the instrument (the help below says the same)
+const TIP = { FX: "Scene: show the knobs, then the next page. Instrument: the sound page", SEL: "Instrument: tap equal / Suiko tuning, hold the tuning page", ENV: "(free)",
+  LFO: "Instrument: vibrato on / off", EDIT: "Instrument: the bend page", GLO: "Scene: painterly / pixel art. Instrument: mono / poly",
+  HOME: "Tap: the status card (scene) or home page (instrument). Hold: scene / instrument", SAVE: "Save. Hold 3 s: back to the defaults",
+  ARP: "Instrument: trill on / off", SEQ: "Instrument: black keys upper row / ornaments", PLAY: "Scene: a new picture", REC: "(free)",
+  "OCT-": "Scene: octave down. Instrument: a note held bends down, none octave down", "OCT+": "Scene: octave up. Instrument: a note held bends up, none octave up",
+  SELECT: "Scene: Activity. Instrument: hon (the key)", PRESETS: "Scene: the scene. Instrument: the voice", ALGORITHM: "Scene: the Mood. Instrument: the scale",
+  MASTER: "Volume" };
+for (const [n, c] of [...Object.entries(buttons), ...Object.entries(knobs)]) if (TIP[n]) c.g.setAttribute("aria-description", TIP[n]);
+for (const [n, k] of Object.entries(knobs))                 // an endless knob: turned by the arrow keys
+  if (k.role !== "master") k.g.setAttribute("aria-description", (TIP[n] ? TIP[n] + ". " : "") + "Arrow keys turn it; Page Up and Page Down turn it faster");
+keys.forEach((k, i) => k.g.setAttribute("aria-description", WHITE_K.includes(i)
+  ? "In a scene: plays the scene's instrument. In the instrument: a note" : "In a scene: the scene's own sound. In the instrument: a note or an ornament"));
+for (const k of Object.values(knobs)) hit(k, "knob");
+for (const b of Object.values(buttons)) hit(b);
+keys.forEach((k) => hit(k));
+
+// ---------------------------------------------------------------- state and input
+let node = null, btnMask = 0, keyMask = 0, latched = 0, master = 2800;
+const btnHeldBy = new Map(), keyHeldBy = new Map();      // pointer / key id -> bit
+function send(m) { if (node) node.port.postMessage(m); }
+function syncButtons() {
+  let m = latched;
+  for (const b of btnHeldBy.values()) m |= 1 << b;
+  if (m !== btnMask) { btnMask = m; send({ type: "buttons", mask: m }); }
+  for (const b of Object.values(buttons)) {
+    b.g.classList.toggle("held", !!(m & (1 << b.bit)));
+    b.g.classList.toggle("latched", !!(latched & (1 << b.bit)));
+    b.hit.classList.toggle("latched", !!(latched & (1 << b.bit)));
+    b.hit.setAttribute("aria-pressed", m & (1 << b.bit) ? "true" : "false");
+  }
+}
+function syncKeys() {
+  let m = 0;
+  for (const k of keyHeldBy.values()) m |= 1 << k;
+  if (m !== keyMask) { keyMask = m; send({ type: "keys", mask: m }); }
+  keys.forEach((k, i) => k.g.classList.toggle("held", !!(m & (1 << i))));
+}
+
+for (const b of Object.values(buttons)) {
+  b.hit.addEventListener("contextmenu", (e) => e.preventDefault());
+  b.hit.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    if (e.shiftKey || e.button === 2) { latched ^= 1 << b.bit; syncButtons(); return; }
+    if (latched & (1 << b.bit)) { latched &= ~(1 << b.bit); syncButtons(); return; }
+    b.hit.setPointerCapture(e.pointerId);
+    btnHeldBy.set("p" + e.pointerId, b.bit);
+    syncButtons();
+  });
+}
+keys.forEach((k, i) => {
+  k.hit.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    k.hit.setPointerCapture(e.pointerId);
+    keyHeldBy.set("p" + e.pointerId, i);
+    syncKeys();
+  });
+  // the strum plate: a finger that went down on a white key moves the held key as it slides
+  if (WHITE_K.includes(i)) k.hit.addEventListener("pointermove", (e) => {
+    const id = "p" + e.pointerId;
+    if (!keyHeldBy.has(id)) return;
+    for (const w of WHITE_K) {
+      const r = keys[w].hit.getBoundingClientRect();
+      if (e.clientX >= r.left && e.clientX < r.right && e.clientY >= r.top - 40 && e.clientY < r.bottom + 40) {
+        if (keyHeldBy.get(id) !== w) { keyHeldBy.set(id, w); syncKeys(); }
+        return;
+      }
+    }
+  });
+});
+// the keyboard on a focused button or key: Space or Enter holds it while held; Shift+Enter keeps a button down; a
+// screen reader's click (no pointer, detail 0) is a short press
+function pressKeys(hitEl, down, up, latch) {
+  hitEl.addEventListener("keydown", (e) => {
+    if (e.key !== " " && e.key !== "Enter") return;
+    e.preventDefault(); e.stopPropagation();
+    if (e.repeat) return;
+    if (latch && e.shiftKey && e.key === "Enter") { latch(); return; }
+    down("f");
+  });
+  hitEl.addEventListener("keyup", (e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); up("f"); } });
+  hitEl.addEventListener("blur", () => up("f"));
+  hitEl.addEventListener("click", (e) => { if (e.detail === 0 && e.pointerType !== "mouse") { down("c"); setTimeout(() => up("c"), 150); } });
+}
+for (const b of Object.values(buttons))
+  pressKeys(b.hit, (w) => { btnHeldBy.set(w + b.bit, b.bit); syncButtons(); }, (w) => { if (btnHeldBy.delete(w + b.bit)) syncButtons(); },
+            () => { latched ^= 1 << b.bit; syncButtons(); });
+keys.forEach((k, i) => pressKeys(k.hit, (w) => { keyHeldBy.set(w + "k" + i, i); syncKeys(); }, (w) => { if (keyHeldBy.delete(w + "k" + i)) syncKeys(); }));
+function pointerUp(e) {
+  const id = "p" + e.pointerId;
+  if (btnHeldBy.delete(id)) syncButtons();
+  if (keyHeldBy.delete(id)) syncKeys();
+}
+device.addEventListener("pointerup", pointerUp);
+device.addEventListener("pointercancel", pointerUp);
+device.addEventListener("lostpointercapture", pointerUp);
+
+function drawKnob(k) {
+  k.ind.setAttribute("transform", `rotate(${k.angle} ${k.x} ${k.y})`);
+}
+function turn(k, n) {
+  if (!n) return;
+  if (k.role === "master") {
+    master = Math.max(0, Math.min(4096, master + n * 64));
+    k.angle = -135 + 270 * master / 4096;
+    k.hit.setAttribute("aria-valuenow", Math.round(master * 100 / 4096));
+    k.hit.setAttribute("aria-valuetext", `${Math.round(master * 100 / 4096)} percent`);
+    send({ type: "master", value: master });
+  } else {
+    k.angle = (k.angle + n * 18) % 360;
+    send({ type: "enc", role: k.role, n });
+  }
+  drawKnob(k);
+}
+for (const k of Object.values(knobs)) {
+  if (k.role === "master") { k.angle = -135 + 270 * master / 4096; drawKnob(k); }
+  let drag = null, wheel = 0;
+  k.hit.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    k.hit.setPointerCapture(e.pointerId);
+    drag = { y: e.clientY, acc: 0 };
+  });
+  k.hit.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    drag.acc += drag.y - e.clientY;
+    drag.y = e.clientY;
+    const step = k.role === "master" ? 3 : 7;
+    const n = Math.trunc(drag.acc / step);
+    if (n) { drag.acc -= n * step; turn(k, n); }
+  });
+  const end = () => { drag = null; };
+  k.hit.addEventListener("pointerup", end);
+  k.hit.addEventListener("pointercancel", end);
+  k.hit.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const dy = e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY;
+    if (Math.abs(dy) >= 50) { turn(k, dy < 0 ? 1 : -1); wheel = 0; return; }   // a mouse wheel notch: one detent
+    wheel -= dy;                                                                   // a trackpad: by distance
+    const n = Math.trunc(wheel / 25);
+    if (n) { wheel -= n * 25; turn(k, n); }
+  }, { passive: false });
+  k.hit.addEventListener("keydown", (e) => {
+    const big = k.role === "master" ? 8 : 5;
+    const n = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1, PageUp: big, PageDown: -big }[e.key] ??
+              (k.role === "master" && e.key === "Home" ? -64 : k.role === "master" && e.key === "End" ? 64 : 0);
+    if (n) { turn(k, n); e.preventDefault(); e.stopPropagation(); }
+  });
+}
+
+const KEYMAP = {};
+"qwertyui".split("").forEach((c, i) => KEYMAP["Key" + c.toUpperCase()] = { key: WHITE_K[i] });
+"asdfghjk".split("").forEach((c, i) => KEYMAP["Key" + c.toUpperCase()] = { key: WHITE_K[8 + i] });
+"1234567890".split("").forEach((c, i) => KEYMAP["Digit" + c] = { key: BLACK_K[i] });
+KEYMAP.Minus = { key: BLACK_K[10] };
+Object.assign(KEYMAP, { ShiftLeft: { btn: BTN.LFO }, ShiftRight: { btn: BTN.LFO }, Slash: { btn: BTN.ARP },
+                        Escape: { btn: BTN.HOME }, KeyZ: { btn: BTN["OCT-"] }, KeyX: { btn: BTN["OCT+"] } });
+// the single-key shortcuts: only while nothing that takes typing has focus (the page, the panel), and the switch
+// under the panel turns them off (WCAG 2.1.4)
+function shortcutsOn() {
+  const a = document.activeElement;
+  if (!document.getElementById("shortcuts").checked) return false;
+  return !a || a === document.body || device.contains(a);
+}
+addEventListener("keydown", (e) => {
+  if (!node || e.metaKey || e.ctrlKey || e.altKey || !shortcutsOn()) return;
+  if (e.code === "ArrowUp" || e.code === "ArrowDown") { turn(knobs.SELECT, e.code === "ArrowUp" ? 1 : -1); e.preventDefault(); return; }
+  const m = KEYMAP[e.code];
+  if (!m) return;
+  e.preventDefault();
+  if (e.repeat) return;
+  if (m.key !== undefined) { keyHeldBy.set("k" + e.code, m.key); syncKeys(); }
+  else { btnHeldBy.set("k" + e.code, m.btn); syncButtons(); }
+});
+addEventListener("keyup", (e) => {
+  const id = "k" + e.code;
+  if (keyHeldBy.delete(id)) syncKeys();
+  if (btnHeldBy.delete(id)) syncButtons();
+});
+addEventListener("blur", () => {
+  for (const id of [...btnHeldBy.keys()]) if (id[0] === "k") btnHeldBy.delete(id);
+  for (const id of [...keyHeldBy.keys()]) if (id[0] === "k") keyHeldBy.delete(id);
+  syncButtons(); syncKeys();
+});
+
+// ---------------------------------------------------------------- screen and lights
+const ctx = document.getElementById("screen").getContext("2d");
+const img = ctx.createImageData(240, 240);
+function drawScreen(fb) {
+  const d = img.data;
+  for (let i = 0; i < 240 * 240; i++) {
+    const v = fb[i], p = ((v >> 8) | (v << 8)) & 0xFFFF;
+    d[i * 4] = ((p >> 11) & 31) * 255 / 31;
+    d[i * 4 + 1] = ((p >> 5) & 63) * 255 / 63;
+    d[i * 4 + 2] = (p & 31) * 255 / 31;
+    d[i * 4 + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+function litName(c, on) {                                  // a lit light is in the control's name
+  if (!c.hit) return;
+  if (c.name === undefined) c.name = c.hit.getAttribute("aria-label");
+  if (c.lit === on) return;
+  c.lit = on;
+  c.hit.setAttribute("aria-label", on ? c.name + ", lit" : c.name);
+}
+function drawLights(b, k) {
+  for (const x of Object.values(buttons)) { x.g.classList.toggle("lit", !!(b & (1 << x.bit))); litName(x, !!(b & (1 << x.bit))); }
+  keys.forEach((x, i) => { x.g.classList.toggle("lit", !!(k & (1 << i))); litName(x, !!(k & (1 << i))); });
+}
+
+// ---------------------------------------------------------------- storage
+function loadStore() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORE_KEY) || "{}"), out = {};
+    for (const [o, b64] of Object.entries(raw)) out[o] = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)).buffer;
+    return out;
+  } catch { return {}; }
+}
+function saveStore(store) {
+  try {
+    const raw = {};
+    for (const [o, u8] of Object.entries(store)) { let s = ""; for (const c of u8) s += String.fromCharCode(c); raw[o] = btoa(s); }
+    localStorage.setItem(STORE_KEY, JSON.stringify(raw));
+  } catch { /* storage unavailable: this session only */ }
+}
+
+// ---------------------------------------------------------------- switching on
+const status = document.getElementById("status"), cpu = document.getElementById("cpu");
+const DEV = new URLSearchParams(location.search).has("dev");   // (?dev: the load readout, for development)
+const hits = [...device.querySelectorAll(".hit")];
+hits.forEach((h) => { h.inert = true; });                  // the panel does nothing until it is switched on
+let gain = null;
+document.getElementById("mute").addEventListener("click", () => {
+  const m = document.getElementById("mute"), on = m.getAttribute("aria-pressed") !== "true";
+  m.setAttribute("aria-pressed", on ? "true" : "false");
+  if (gain) gain.gain.value = on ? 0 : 1;
+});
+async function switchOn() {
+  const go = document.getElementById("go");
+  go.disabled = true;
+  go.textContent = "Starting...";
+  try {
+    const ac = new AudioContext({ sampleRate: 44100, latencyHint: "interactive" });
+    const [wasm] = await Promise.all([fetch("zen1.wasm").then((r) => { if (!r.ok) throw new Error(`zen1.wasm: ${r.status}`); return r.arrayBuffer(); }),
+                                      ac.audioWorklet.addModule("worklet.js")]);
+    node = new AudioWorkletNode(ac, "zen1", { numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2] });
+    gain = ac.createGain();
+    gain.gain.value = document.getElementById("mute").getAttribute("aria-pressed") === "true" ? 0 : 1;
+    node.connect(gain).connect(ac.destination);
+    const ready = new Promise((res) => {
+      node.port.onmessage = (e) => {
+        const m = e.data;
+        if (m.type === "ready") res();
+        else if (m.type === "frame") {
+          if (m.fb) drawScreen(m.fb);
+          drawLights(m.buttons, m.keys);
+          window.zen1Last = m;
+          if (m.load !== undefined && DEV) cpu.textContent = `ZEN-1 uses ${m.load}% of this computer's time`;
+          if (m.store) saveStore(m.store);
+        }
+      };
+    });
+    node.port.postMessage({ type: "load", wasm, store: loadStore(), master }, [wasm]);
+    await ready;
+    await ac.resume();
+    document.getElementById("start").hidden = true;
+    hits.forEach((h) => { h.inert = false; });
+    status.textContent = ac.sampleRate === 44100 ? "On." : `On (the browser runs audio at ${ac.sampleRate} Hz).`;
+    syncButtons(); syncKeys();
+  } catch (err) {
+    go.disabled = false;
+    go.textContent = "Switch on";
+    status.textContent = "Could not start: " + (err && err.message || err) + ". Chrome, Edge, Firefox and Safari should all work.";
+  }
+}
+document.getElementById("go").addEventListener("click", switchOn);
+document.getElementById("reset").addEventListener("click", () => {
+  if (document.getElementById("reset").dataset.armed) {
+    try { localStorage.removeItem(STORE_KEY); } catch {}
+    location.reload();
+  } else {
+    document.getElementById("reset").dataset.armed = "1";
+    document.getElementById("reset").textContent = "Click again to forget everything";
+  }
+});
+</script>
+</body>
+</html>

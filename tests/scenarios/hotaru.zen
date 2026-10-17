@@ -1,0 +1,115 @@
+# Hotaru: fireflies blink, and in waves fall into step; a blink is a note (its height), blinks together a
+# soft chord; frogs call and answer; a shakuhachi now and then; white keys release a firefly, black keys scatter
+# (ZEN-1 boots into Sakura; PRESETS twice: Hotaru)
+wait 800
+spin PRESET 1
+wait 300
+spin PRESET 1
+wait 1000
+expect scene 2
+expect knob2 0
+expect knob7 30
+expect knob4 50
+expect knob5 30
+expect knob6 20
+expect knob9 0
+expect knob8 3
+expect knob13 0
+# DRIFT, KNOB 4: the weather held clear for this test (Auto picks each night: mist and
+# rain mean fewer fireflies); MOOD: Mood, Depth, Melody (Height), Arc 30
+tap FX
+tap FX
+tap FX
+spin K1 1
+expect knob13 1
+expect knob0 0
+expect tweaks 1
+expect knob11 0
+expect knob14 0
+expect knob15 50
+expect wx 0
+# Natural: a few at dusk, the rest coming out over ~4 min
+expect fireflies >0
+expect fireflies <4
+# free at first, then the coupling rises: in step within ~3 min
+wait 30000
+expect insync <80
+wait 150000
+expect insync >90
+expect blinks >30
+expect pulses >15
+expect scnotes >40
+expect frogcalls >5
+expect owls >0
+expect stars >0
+expect nvoices <13
+shot hotaru.png
+# black keys: a note each, low to high over the white keys' sixteen (b0 -> 6, b4 -> 13, b9 -> 21), a firefly
+# flashing with it
+tapkey b0
+wait 20
+expect relkey 6
+tapkey b4
+wait 20
+expect relkey 13
+tapkey b9
+wait 20
+expect relkey 21
+expect flashes 3
+# the top black key: the clearing breeze carries every firefly off to the right; new ones rise after it
+tapkey b10
+wait 50
+expect scatters 1
+wait 14000
+expect fireflies <3
+wait 30000
+expect fireflies >1
+# a white key: a firefly rises at that note, heard at once
+tapkey w10
+wait 100
+expect released 1
+expect relkey 16
+expect fireflies >3
+# sixteen notes, each its own, rising from 6 (w0 -> 6 .. w15 -> 21)
+tapkey w1
+wait 100
+expect relkey 7
+tapkey w3
+wait 100
+expect relkey 9
+tapkey w15
+wait 100
+expect relkey 21
+expect released 4
+# Music: Phrases (a list: Height -> Across -> Own -> Loops -> Height)
+tap FX
+tap FX
+tap FX
+tap FX
+spin K3 1
+expect knob14 1
+spin K3 3
+expect knob14 0
+wait 240000
+# they fall into step and drift apart again: at some point in these minutes, out of step
+expect insyncmin <75
+# MIX: Frogs to 0: no more calls
+tap FX
+tap FX
+spin K4 -60
+expect knob7 0
+wait 1000
+expect frogcalls >0
+tap PLAY
+wait 2000
+shot hotaru-regrown.png
+# back to the instrument: everything of the field lets go
+press HOME
+wait 800
+release HOME
+wait 4000
+expect mode 0
+expect nvoices 0
+# only what changed is sent to the screen; the screen as sent always matches the frame as drawn
+expect stale 0
+expect race 0

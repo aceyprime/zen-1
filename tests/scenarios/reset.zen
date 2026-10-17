@@ -1,0 +1,73 @@
+# SAVE held 3 s: everything back to the defaults; let go before then: canceled, nothing changes or saves
+# (ZEN-1 boots into the scene)
+wait 800
+spin K2 20
+tap FX
+spin K3 -20
+wait 2000
+expect knob1 45
+expect knob6 10
+# the instrument: a key and a voice
+press HOME
+wait 800
+release HOME
+wait 100
+expect mode 0
+turn SELECT 2 80
+turn PRESET 1 80
+wait 100
+expect par0 6
+expect par7 1
+# several saves before the reset: the reset must still be the newest at the next power-on (its save count
+# carries on from theirs; the journal keeps the highest)
+tap SAVE
+wait 100
+turn SELECT 1 80
+wait 100
+tap SAVE
+wait 100
+turn SELECT -1 80
+wait 100
+tap SAVE
+wait 100
+expect par0 6
+expect save_seq >2
+# held 1.5 s: the countdown shows, then canceled
+press SAVE
+wait 1500
+shot reset-countdown.png
+release SAVE
+wait 100
+expect par0 6
+expect par7 1
+# held 3.2 s: reset
+press SAVE
+wait 3200
+release SAVE
+wait 300
+shot reset-done.png
+# (a reset stays where it is: here the instrument; the scene's knobs are back to the defaults too)
+expect mode 0
+expect par0 4
+expect par7 0
+expect dirty 0
+press HOME
+wait 800
+release HOME
+wait 100
+expect mode 1
+expect knob1 25
+expect knob6 30
+expect kept 0
+# and it is saved: a reboot keeps the defaults
+reboot
+wait 1500
+expect mode 1
+expect knob1 25
+expect kept 0
+press HOME
+wait 800
+release HOME
+wait 100
+expect par0 4
+expect par7 0

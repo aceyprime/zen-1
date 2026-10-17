@@ -1,0 +1,86 @@
+# Koi: koi eat the food and each bite is a note (its ring: the middle low, the rim high); a white key
+# drops food on its own ring; uneaten food may come back as memory; the shishi-odoshi knocks; Swim and Koi knobs
+# (ZEN-1 boots into Sakura; PRESETS: the pond)
+wait 800
+spin PRESET 1
+wait 1000
+# the top black key tips the shishi-odoshi now; the others toss pebbles, each its own ring and bowl note (looked
+# at 20 ms after: the pebble's note is at once, before a koi's bite can come between)
+expect knob13 50
+tapkey b10
+wait 600
+expect knocks 1
+tapkey b0
+wait 20
+expect lastkey 6
+tapkey b0
+wait 20
+expect lastkey 6
+tapkey b9
+wait 20
+expect lastkey 15
+expect pebbles 3
+expect knob9 0
+expect knob7 30
+expect knob4 70
+expect knob6 30
+expect knob12 6
+expect knob5 15
+# Knock 0: it never knocks by itself, but the top black key still tips it
+tap FX
+tap FX
+tap FX
+spin K2 -50
+expect knob13 0
+wait 2000
+tapkey b10
+wait 2500
+expect knocks 2
+spin K2 50
+expect knob13 50
+wait 60000
+expect koieaten >3
+expect scnotes >3
+expect nvoices <13
+expect drones >0
+shot pond.png
+# the keyboard: a white key plays its note at once (sixteen notes from 6: w9 -> 15), and drops food on its ring
+tapkey w9
+wait 20
+expect koinote 15
+# food on keys' rings, and the koi come for it
+tapkey w14
+tapkey w6
+tapkey w10
+wait 40000
+expect koieaten >8
+# the shishi-odoshi tips within a couple of minutes; something has been remembered
+wait 120000
+# (two forced, and at Knock 50 one every 60-120 s by itself)
+expect knocks >2
+expect memories >0
+# DRIFT: Swim (a list: Orbit -> School -> Orbit); MORE: Koi 5 -> 9 (a number: stops at 9)
+wait 20000
+shot school.png
+spin K1 5
+expect knob12 9
+wait 5000
+expect koieaten >10
+# the night (the stone lantern lit, the koi pale): drawn and sent whole
+dayat 0.7
+wait 4000
+shot night.png
+expect stale 0
+expect race 0
+# every knob name and value fits its column
+expect textfit 0
+# back to the instrument: everything of the pond lets go
+press HOME
+wait 800
+release HOME
+wait 6000
+expect mode 0
+expect nvoices 0
+# only what changed is sent to the screen; the screen as sent always matches the frame as drawn
+expect stale 0
+expect race 0

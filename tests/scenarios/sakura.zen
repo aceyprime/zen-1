@@ -1,0 +1,75 @@
+# Sakura: petals fall, land and make notes by themselves; the keys shake the blossoms and blow gusts; the
+# knobs move activity, time, tone and space; the style switches; nothing grows without bound
+# (ZEN-1 boots into the scene)
+wait 800
+wait 50
+expect mode 1
+wait 3000
+shot sakura-start.png
+wait 27000
+expect landed >5
+expect scnotes >1
+expect peak_db_max <-6
+shot sakura-30s.png
+# the default is unhurried: over two minutes, a landing note every three or four seconds,
+# most of them echoed once, softly. Across ten seeds: 33..52 landing notes in two minutes (gusts' runs
+# count too); this boot's seed is a busy one (~58)
+wait 90000
+expect scnotes >18
+expect scnotes <65
+expect echoes >8
+expect echoes <45
+expect drones >0
+# a busy minute at full activity and double speed stays a few notes a second at most
+spin K2 30
+wait 60000
+expect scnotes <400
+expect nvoices <13
+# a full engine never takes the drone's two voices
+expect drones >0
+shot sakura-busy.png
+tapkey w3
+tapkey b8
+wait 5000
+shot sakura-gust.png
+spin K3 2
+spin K4 -10
+wait 300
+shot sakura-knobs.png
+tap GLO
+wait 2000
+expect style 1
+shot sakura-pixel.png
+# keys. A white key plays its note at once (sixteen notes, each its own, rising from 3: w0 -> 3, w13 -> 16); a black key plays
+# the harp, its own note, low to high (b0 -> 3, b9 -> 12)
+tapkey w7
+wait 20
+expect keynote 10
+tapkey w0
+wait 20
+expect keynote 3
+tapkey w13
+wait 20
+expect keynote 16
+tapkey b0
+wait 20
+expect keynote 3
+tapkey b9
+wait 20
+expect keynote 12
+expect harpkeys >1
+# the night (yozakura: the tree lit, lanterns, their light on the river): drawn and sent whole
+dayat 0.7
+wait 4000
+shot night.png
+expect stale 0
+expect race 0
+press HOME
+wait 800
+release HOME
+wait 6000
+expect mode 0
+expect nvoices 0
+# only what changed is sent to the screen; the screen as sent always matches the frame as drawn
+expect stale 0
+expect race 0

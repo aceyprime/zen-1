@@ -1,0 +1,61 @@
+# the sleep timer (SEQ: OFF, 15 m, 30 m, 1 h, 2 h, 4 h, 8 h, round; from now): the picture dims over its last ten
+# minutes, then the sound and the picture fade out over half a minute and all is dark and quiet; a button wakes it
+# (only wakes) and the timer is off. SEL: the knobs' page before (with the bar hidden: the first, Scene, as FX)
+wait 800
+expect ledSEQ 1
+expect ledSEL 1
+expect ledEDIT 0
+tap SEL
+expect page 0
+tap SEL
+expect page 3
+tap FX
+expect page 0
+wait 4000
+tap SEQ
+expect sleep 1
+expect ledSEQ 2
+tap SEQ
+tap SEQ
+tap SEQ
+tap SEQ
+tap SEQ
+expect sleep 6
+tap SEQ
+expect sleep 0
+expect ledSEQ 1
+# 15 m: full until its last ten minutes, then dimming
+tap SEQ
+wait 240000
+expect sleepdim 256
+expect sleeplevel 100
+wait 360000
+expect sleepdim <190
+expect sleeplevel 100
+wait 290000
+expect sleepdim <110
+expect asleep 0
+# the fade: half a minute
+wait 35000
+expect sleeplevel <10
+wait 10000
+expect asleep 2
+expect sleep 0
+expect sleepdim 0
+expect sleeplevel 0
+expect stale 0
+expect race 0
+# a press only wakes: GLO does not switch the style
+expect style 0
+tap GLO
+wait 200
+expect asleep 0
+expect sleepdim 256
+expect sleeplevel 100
+expect style 0
+tap GLO
+expect style 1
+tap GLO
+wait 2000
+expect stale 0
+expect race 0

@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZEN-1 guide</title>
+<meta name="description" content="ZEN-1's guide: every control, every knob, and everything in each scene.">
+<style>
+:root { --ground: #faf4e8; --ink: #3b2f28; --muted: #6e5c4b; --rule: #e6dccb; --accent: #b84a1e; --card: #fffaf1; color-scheme: light; }
+@media (prefers-color-scheme: dark) {
+  :root { --ground: #1c1814; --ink: #f2e8d8; --muted: #b3a28e; --rule: #3a322a; --accent: #f08a6a; --card: #26201b; color-scheme: dark; }
+}
+body { background: var(--ground); color: var(--ink); margin: 0; padding: 40px 16px 64px; font: 400 17px/1.6 -apple-system, "Helvetica Neue", Arial, sans-serif; }
+main { max-width: 46rem; margin: 0 auto; }
+h1 { font-size: 2.4rem; line-height: 1.1; margin: 0 0 .4rem; color: var(--accent); }
+h2 { font-size: 1.45rem; margin: 2.4rem 0 .6rem; }
+h3 { font-size: 1.1rem; margin: 1.4rem 0 .3rem; }
+nav.toc { margin: 0 0 1.6rem; }
+nav.toc a { margin-right: 1rem; }
+.pics { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin: .6rem 0 1rem; }
+.pics img { width: 100%; height: auto; border-radius: 10px; image-rendering: pixelated; display: block; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; margin: .4rem 0 1rem; }
+td, th { border-top: 1px solid var(--rule); padding: 8px 10px 8px 0; vertical-align: top; text-align: left; }
+th[scope=row] { font-weight: 600; white-space: nowrap; }
+ul { padding-left: 1.2rem; }
+li { margin: .25rem 0; }
+li > ul { margin: .2rem 0 .4rem; }
+td ul { margin: 0; padding-left: 1.1rem; }
+td li { margin: .1rem 0; }
+.start { border: 1px solid var(--rule); background: var(--card); border-radius: 14px; padding: 12px 16px; margin: 0 0 1.6rem; }
+.start ul { margin: .4rem 0 0; }
+p.small { color: var(--muted); font-size: .9rem; }
+a { color: var(--accent); }
+:focus-visible { outline: 3px solid #1f6fd1; outline-offset: 2px; }
+@media (prefers-color-scheme: dark) { :focus-visible { outline-color: #79adff; } }
+footer { max-width: 46rem; margin: 2.4rem auto 0; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<main>
+<p><a href="../">← ZEN-1</a></p>
+<h1>The guide</h1>
+<nav class="toc"><a href="#start">Quick start</a><a href="#controls">Controls</a><a href="#knobs">Knobs</a><a href="#moods">Moods</a><a href="#sound">The music</a><a href="#sakura">Sakura</a><a href="#koi">Koi</a><a href="#hotaru">Hotaru</a><a href="#instrument">Instrument</a></nav>
+
+<div class="start" id="start"><strong>Quick start.</strong> ZEN-1 plays by itself, so you never have to touch
+anything. These four controls are all you need at first:
+<ul>
+<li><b>PRESETS</b> (the knob): choose the scene: Sakura, Koi or Hotaru.</li>
+<li><b>ALGORITHM</b> (the knob): choose the mood, such as Morning or Night.</li>
+<li><b>MASTER</b>: the volume.</li>
+<li><b>PLAY</b>: draw a new picture, such as a new tree or a new pond. The music keeps playing.</li>
+</ul>
+Then try the keys: they play notes that fit the music, and the scene reacts to them. The first time ZEN-1 starts, a
+welcome card on the screen shows these too; touch anything to put it away.</div>
+
+<h2 id="controls">The controls</h2>
+<p>ZEN-1 starts in the scene you used last. Your changes are saved by themselves about 20 seconds after you stop
+touching anything. Only the buttons that do something are lit.</p>
+<table>
+<tr><th scope="row">PRESETS</th><td>Choose the scene: Sakura, Koi or Hotaru. The name shows as you turn, and the scene changes half a second after you stop.</td></tr>
+<tr><th scope="row">ALGORITHM</th><td>Choose the mood: the time of day and the feel of the scene. See <a href="#moods">Moods</a>.</td></tr>
+<tr><th scope="row">SELECT</th><td>Activity: how busy the scene is. Turn it down for a few slow notes and a calm picture; turn it up for more going on and more notes. See <a href="#knobs">the knobs</a>.</td></tr>
+<tr><th scope="row">KNOB 1–4</th><td>Change the four settings on the page that's showing. Their names and values appear for three seconds.</td></tr>
+<tr><th scope="row">FX</th><td>Show the knob pages. Each press while they're showing goes to the next page: Scene, Volume, Nature, Music.</td></tr>
+<tr><th scope="row">SEL</th><td>Go back one page. If no page is showing, it opens the Scene page, as FX does.</td></tr>
+<tr><th scope="row">GLO</th><td>Switch between the painted look and pixel art.</td></tr>
+<tr><th scope="row">PLAY</th><td>Draw a new picture: a new tree, a new pond, or a new field and moon. It fades in gently, and the music keeps playing.</td></tr>
+<tr><th scope="row">HOME</th><td><ul>
+<li><b>Tap:</b> show the battery level (an estimate for now), the scene and the mood for three seconds.</li>
+<li><b>Hold:</b> switch to the koto instrument (see <a href="#instrument">below</a>). The screen says "KOTO · hold HOME: back"; hold HOME again to come back to the scene.</li></ul></td></tr>
+<tr><th scope="row">SEQ</th><td>The sleep timer.<ul>
+<li>Each press sets the next time: Off, 15 min, 30 min, 1 h, 2 h, 4 h, 8 h.</li>
+<li>SEQ is brighter while the timer runs. Tap HOME to see the time left.</li>
+<li>In the last ten minutes the picture dims. At the end, the sound and picture fade out over half a minute.</li>
+<li>Press any button or key to wake it up. That press only wakes it, and the timer turns off.</li></ul></td></tr>
+<tr><th scope="row">SAVE</th><td><ul>
+<li><b>Tap:</b> save your changes right away. You rarely need this, because changes save themselves after about
+20 seconds; tap it if you're about to switch the FM-1 off straight after a change.</li>
+<li><b>Hold for 3 seconds:</b> reset everything to how it came. A countdown shows; let go to cancel.</li></ul></td></tr>
+<tr><th scope="row">OCT− · OCT+</th><td><ul>
+<li>Move the scene's notes down or up an octave.</li>
+<li><b>Hold both for 5 seconds:</b> update mode, used when installing new firmware.</li></ul></td></tr>
+<tr><th scope="row">MASTER</th><td>The volume.</td></tr>
+<tr><th scope="row">Keys</th><td><ul>
+<li>The sixteen white keys play sixteen notes, low on the left to high on the right. Every one fits the music.</li>
+<li>Each scene reacts to the keys in its own way, and the black keys do something special in each scene. See each scene below.</li></ul></td></tr>
+</table>
+
+<h2 id="knobs">The knobs</h2>
+<div class="pics"><img src="../img/gallery/knobs.png" alt="The knob bar: the scene's page, with Mood, Activity, Instrument and Space; the dot after the mood says it is tweaked"><img src="../img/gallery/status-card.png" alt="The status card from a tap on HOME: battery, scene and mood"></div>
+<p>Press FX to show the knobs. There are four pages of four, and every scene uses the same layout, so a knob is
+always in the same place. The tabs along the top show which page you're on.</p>
+<h3>Scene page</h3>
+<ul>
+<li><b>Mood:</b> the time of day and the feel of the scene (the same as the ALGORITHM knob). See <a href="#moods">Moods</a>.</li>
+<li><b>Activity</b> (0–100): how busy the scene is, and so how many notes play, from about one every five seconds
+up to about three a second.
+  <ul>
+  <li><b>Sakura:</b> how many petals are falling, and how windy it is</li>
+  <li><b>Koi:</b> how much food falls in, and how hungry the koi are</li>
+  <li><b>Hotaru:</b> how many fireflies are out</li>
+  </ul></li>
+<li><b>Instrument:</b> the sound the notes are played with, such as koto or bell. Each scene has its own list.</li>
+<li><b>Space:</b> how much reverb: from a dry, close sound to a large, echoing room.</li>
+</ul>
+<h3>Volume page</h3>
+<ul>
+<li><b>Notes:</b> the melody notes the scene plays.</li>
+<li><b>Drone:</b> the soft, steady hum underneath the notes.</li>
+<li><b>Air:</b> the background sound of the air: wind or insects (choose which on the Nature page).</li>
+<li><b>Water:</b> the background sound of water: a brook, bubbles, rain and so on (choose which on the Nature page).
+In Hotaru this knob is <b>Frogs</b> instead.</li>
+</ul>
+<h3>Nature page</h3>
+<ul>
+<li><b>Two settings of the scene's own</b>, such as how often the bamboo knocks in Koi. See each scene below.</li>
+<li><b>Air Type:</b> which air sound plays.
+  <ul>
+  <li><b>Soft:</b> a gentle made-up breeze</li>
+  <li><b>Breeze:</b> a recording of wind in trees</li>
+  <li><b>Insects:</b> a recording of crickets, fuller at night</li>
+  </ul></li>
+<li><b>Water Type:</b> which water sound plays. Each scene has its own list.</li>
+</ul>
+<h3>Music page</h3>
+<ul>
+<li><b>Echo:</b> how much the notes echo. At 0 there are no echoes; turned up, more notes come back softly a few seconds later.</li>
+<li><b>Warmth:</b> the tone of the whole sound, from bright and clear to soft and mellow.</li>
+<li><b>Phrases:</b> how the notes are chosen.
+  <ul>
+  <li><b>Free:</b> each note follows what happens on screen.</li>
+  <li><b>Loops:</b> notes come from four short repeating patterns of different lengths, so tunes come back but never
+  line up the same way twice.</li>
+  </ul></li>
+<li><b>Tide</b> (0–100): how much the music slowly swells and fades. Over three to six minutes it moves between
+quiet and sparse, and full and bright. At 0 it stays even.</li>
+</ul>
+<p><b>Turning tips:</b> a knob with a list of choices wraps round past either end. A knob with a number stops at its
+ends, and turning quickly moves faster.</p>
+
+<h2 id="moods">Moods</h2>
+<p>The Mood knob sets a scene's time of day and its whole character at once: how busy it is, its sounds, its key and
+scale. Changing it glides there over about thirty seconds; nothing jumps.</p>
+<ul>
+<li><b>Natural</b> (the default): a whole day, or a whole night, every half hour. The music follows the light:
+  <ul>
+  <li>Livelier by day, in the bright Yo scale</li>
+  <li>Quieter and warmer from golden hour through the night, in Min'yo</li>
+  <li>Now and then at dawn the key drifts a fourth or fifth.</li>
+  </ul></li>
+<li><b>The scene's four</b> each hold their own time and sound, in their own key and scale, in the order the day (or
+night) meets them.</li>
+<li><b>Your tweaks:</b> turn any knob and the mood you are in keeps your setting.
+  <ul>
+  <li>The first time, a note says "Morning · your own now" (or whichever mood).</li>
+  <li>From then on its name has a small dot after it, on the knob bar and on the HOME card.</li>
+  <li>Every mood of every scene keeps its own tweaks, after a power-off too: switch to another mood and back, and
+  yours are there.</li>
+  <li>A tweaked Natural still runs its whole day, the sound still following the light.</li>
+  </ul></li>
+<li><b>Reset:</b> on the Mood knob, a tweaked mood is followed by "Reset" and its name. Leave the knob there for two
+seconds and that mood goes back to how it was made; turn on and nothing changes.</li>
+</ul>
+
+<h2 id="sound">The music</h2>
+<ul>
+<li><b>From the world:</b> every note comes from something you can see happen. Where it happens chooses the note;
+how fast and how near, how loud.</li>
+<li><b>The drone</b> breathes: three voices, each coming and going on its own cycle, one now and then sitting a
+breath out, so it is never still and never gone.</li>
+<li><b>Tide:</b> a slow ebb and flow of three to six minutes between sparse (fewer notes, more echo, darker) and full.</li>
+<li><b>Rests:</b> every few minutes the notes pause for 8 to 18 seconds, a breath, while the drone and the world go on.
+Your own keys always sound.</li>
+<li><b>Scales:</b> the Japanese pentatonic Yo (bright), Min'yo (warm) and In (dark).</li>
+<li><b>Echo, Space and Warmth</b> shape the room it all plays in.</li>
+</ul>
+
+<h2 id="sakura">Sakura 桜</h2>
+<div class="pics"><img src="../img/gallery/sakura-morning.png" alt="Sakura in the morning: a cherry tree over a misty stream, cherries along its stone-walled far bank"><img src="../img/gallery/sakura-afternoon.png" alt="Sakura in the afternoon sun, the far bank mirrored in the stream"><img src="../img/gallery/sakura-golden.png" alt="Sakura at golden hour, the blossoms warm"><img src="../img/gallery/sakura-night.png" alt="Sakura at night: the tree lit up, lanterns along the far bank, their light on the river"><img src="../img/gallery/sakura-pixel.png" alt="Sakura in the pixel-art style"></div>
+<p>A Somei-Yoshino cherry, nearly white in bloom, leans out over a narrow city stream. Every new picture is a new
+tree, a new far bank and new hills.</p>
+<h3>What you see</h3>
+<ul>
+<li><b>The tree:</b> sprays of flowers along its twigs, lit from above with cool shade beneath. Sunlight slants
+through it to dapple the water.</li>
+<li><b>The far bank:</b> a stone wall rising to a path lined with cherries, their crowns meeting and blossom hanging
+over the wall, an evergreen here and there, and paper lanterns (bonbori) all along.</li>
+<li><b>Beyond:</b> range after range of hazy blue hills, sometimes with snow left on the far peaks, under a soft
+spring sky.</li>
+<li><b>The water:</b> jade, with the bank and its trees mirrored in it, the reflection wavering with the ripples.
+  <ul>
+  <li>Ripple marks drift downstream, and a gust darkens the water as it runs across.</li>
+  <li>Petals gather into rafts (hanaikada) and drift slowly downstream.</li>
+  <li>The sun lays a path of glitter on the water, golden in the evening.</li>
+  </ul></li>
+<li><b>Our bank:</b> the tree's roots, mossy stones, reeds that sway in the wind, rapeseed and violets, and fallen
+petals that build up under the tree through the day.</li>
+<li><b>Visitors:</b> a butterfly passes, a bush warbler lands on a branch and sings, and a light spring shower comes
+over.</li>
+</ul>
+<h3>What you hear</h3>
+<ul>
+<li>Each petal that lands makes a koto note, pitched by where it lands. Far-off petals, and those at night, bloom as
+soft swells.</li>
+<li>Floating petals that touch make a quiet note of their own.</li>
+<li>A gust shakes loose a shower of petals with a harp run or a glass wind chime.</li>
+<li>Now and then a whole cluster of blossoms falls and lands with a double ring and a deep bowl.</li>
+</ul>
+<h3>Moods</h3>
+<ul>
+<li><b>Morning:</b> a pale mist over the far bank and the river.</li>
+<li><b>Afternoon:</b> full sun, the water glinting.</li>
+<li><b>Golden Hour:</b> warm orange light on the blossoms, the sky going pink to violet.</li>
+<li><b>Night</b> (yozakura): the tree lit pale pink against the dark, under stars and a moon.
+  <ul>
+  <li>The paper lanterns along the far bank light one after another, lighting the blossom above them.</li>
+  <li>Their light and the crown's lie in streaks on the river.</li>
+  </ul></li>
+</ul>
+<h3>Settings</h3>
+<ul>
+<li><b>Instrument:</b> Warm, Koto, Koto II, Pluck, Ring</li>
+<li><b>Water Type:</b> Bubbles, Brook, White, Pink, Deep, Rain</li>
+<li><b>Nature page:</b>
+  <ul>
+  <li><b>Clusters:</b> how often a blossom cluster falls (0: never)</li>
+  <li><b>Gust Sound:</b> Harp or Chime</li>
+  </ul></li>
+</ul>
+<h3>Keys</h3>
+<ul>
+<li><b>White keys:</b> the koto plays your note, and the blossoms above that key shake. A few seconds later two
+petals land with your note again, softly.</li>
+<li><b>Black keys:</b> the harp, low to high, each note ringing out from somewhere on the open water.</li>
+</ul>
+
+<h2 id="koi">Koi 鯉</h2>
+<div class="pics"><img src="../img/gallery/koi-day.png" alt="The koi pond by day, seen from above: koi among lily pads in a ring of stones"><img src="../img/gallery/koi-feeding.png" alt="The koi pond at feeding time, the koi near the surface"><img src="../img/gallery/koi-still.png" alt="The still pond, the koi deeper and slower"><img src="../img/gallery/koi-rain.png" alt="Rain on the koi pond, rings where the drops land"><img src="../img/gallery/koi-night.png" alt="The koi pond at night, a stone lantern lit and the moon on the water"><img src="../img/gallery/koi-pixel.png" alt="The koi pond in the pixel-art style"></div>
+<p>Koi of the real varieties swim in a garden pond. PLAY makes a new pond, a new shape with new koi.</p>
+<h3>What you see</h3>
+<ul>
+<li><b>The koi</b> (every pond has at least three varieties, and one koi bigger than the rest):
+  <ul>
+  <li><b>Kohaku:</b> white with red patches</li>
+  <li><b>Sanke:</b> white and red, with small black spots</li>
+  <li><b>Showa:</b> black, red and white</li>
+  <li><b>Tanchō:</b> white with a red circle on the head</li>
+  <li><b>Asagi:</b> blue-gray with a net of scales, orange along its sides</li>
+  <li><b>Ogon</b> and <b>platinum:</b> metallic</li>
+  <li><b>Kigoi:</b> yellow</li>
+  <li>Now and then a <b>butterfly koi</b>, with long, trailing fins</li>
+  </ul></li>
+<li><b>How they move:</b> they stroke and glide, hover with their fins fluttering, follow one another, rest in the
+shade under the lily pads, and rise with mouths open to take food at the surface. Lower down they are dimmer and
+bluer, their shadows on the floor.</li>
+<li><b>The pond:</b> an edge of mossy stones (some reaching over the water), clumps of iris and sedge, ferns, a maple
+branch over a corner and pebbles in the shallows; veined lily pads in clusters with white or pink water lilies, and
+leaves afloat. Clouds drift across the water, lines of light play on the floor, and breezes ruffle the surface.</li>
+<li><b>The shishi-odoshi:</b> a bamboo pipe that fills and knocks, over a stone basin with a ladle across it.</li>
+<li><b>Frogs:</b> six Japanese pond frogs, in their real colors and markings, each as common as it would be at a
+garden pond. They hop onto the lily pads, croak at a pitch to match their size and plop back in, and the koi turn to
+look.
+  <ul>
+  <li>The black-spotted pond frog</li>
+  <li>The Daruma pond frog</li>
+  <li>The Japanese tree frog</li>
+  <li>Schlegel's green tree frog</li>
+  <li>The warty wrinkled frog</li>
+  <li>The big bullfrog</li>
+  </ul></li>
+</ul>
+<h3>What you hear</h3>
+<ul>
+<li>Every bite of food is a note: deep in the middle low, near the rim high.</li>
+<li>A few pellets fall in by themselves (smaller and paler than yours), and now and then a petal drifts in from
+Sakura's tree.</li>
+<li>A koi that has eaten is full for a while, so some food sinks uneaten, and may come back later as a soft bowl note:
+the pond remembers.</li>
+<li>Two koi passing close, or one rising to mouth at the surface, ring a singing bowl.</li>
+<li>The shishi-odoshi knocks, and the frogs croak.</li>
+</ul>
+<h3>Moods</h3>
+<ul>
+<li><b>Feeding:</b> bright midday, glints winking on the water, the koi quick and near the top.</li>
+<li><b>Still Pond:</b> soft light, the koi deeper and slower.</li>
+<li><b>Rain:</b> a gray sky on the water. Every drop you see land you also hear, there, and a few splash on the lily
+pads.</li>
+<li><b>Night:</b> a stone lantern on the moss lights up, its glow on the dark water.
+  <ul>
+  <li>The moon's reflection wavers, and the water and stones are touched by moonlight.</li>
+  <li>The koi are pale shapes below.</li>
+  </ul></li>
+</ul>
+<h3>Settings</h3>
+<ul>
+<li><b>Instrument:</b> Drop, Mallet, Bell, Koto, Warm</li>
+<li><b>Water Type:</b> Soft bubble, Bubbles, Trickle, Brook, White, Pink, Deep, Rain</li>
+<li><b>Nature page:</b>
+  <ul>
+  <li><b>Koi Count:</b> 3–9 (6 at first)</li>
+  <li><b>Bamboo:</b> how often the shishi-odoshi knocks (0: never)</li>
+  </ul></li>
+</ul>
+<h3>Keys</h3>
+<ul>
+<li><b>White keys:</b> play your note and drop food on its ring, on your side of the pond. The koi come over, and
+when one finds it you hear the note again. Play a melody and the koi play it back in their own order.</li>
+<li><b>Black keys:</b>
+  <ul>
+  <li>The lower ten each toss a pebble onto its ring, each with its own bowl note.</li>
+  <li>The top one tips the shishi-odoshi.</li>
+  </ul></li>
+</ul>
+
+<h2 id="hotaru">Hotaru 蛍</h2>
+<div class="pics"><img src="../img/gallery/hotaru-dusk.png" alt="Fireflies over a stream at dusk"><img src="../img/gallery/hotaru-festival.png" alt="A full moon over the firefly stream"><img src="../img/gallery/hotaru-quiet.png" alt="A quiet night over the firefly stream"><img src="../img/gallery/hotaru-deep.png" alt="Deep night: the Milky Way and many stars"><img src="../img/gallery/hotaru-rain.png" alt="Rain over the firefly stream, rings on the water"><img src="../img/gallery/hotaru-mist.png" alt="Mist over the firefly stream, the moon hazy"><img src="../img/gallery/hotaru-pixel.png" alt="The firefly stream in the pixel-art style"></div>
+<p>Fireflies drift over a summer field and a slow stream among swaying reeds.</p>
+<h3>What you see</h3>
+<ul>
+<li><b>The fireflies:</b> each flashes every four or five seconds on its own clock and nudges the others toward its
+timing, so over a few minutes the whole field falls into one gentle pulse, holds it, and drifts apart again. Their
+glows waver in the stream.</li>
+<li><b>Through the night:</b> in Natural, only a few are out at dusk and the rest come out over the next few minutes,
+as real fireflies do after sunset. They are most in the first part of the night, then fewer toward midnight, and fewer
+still toward dawn.</li>
+<li><b>The moon</b> is drawn from NASA's Lunar Reconnaissance Orbiter map, its seas where they really are.
+  <ul>
+  <li>Full, gibbous, half or crescent.</li>
+  <li>It takes the path its phase really does: a full moon rises at dusk and stands highest at midnight, a half moon
+  is already high at dusk, and a crescent sets early.</li>
+  <li>Its light lies on the stream only while you can see it.</li>
+  </ul></li>
+<li><b>The stars</b> come out the brightest first, scattered in loose clusters, a few faintly blue or warm, dimmed
+near the moon and low in the haze. A shooting star crosses now and then.</li>
+<li><b>Weather</b> (Auto, Clear, Mist, Rain):
+  <ul>
+  <li><b>Mist</b> rolls in in soft fog banks, and the moon's glow is hazy.</li>
+  <li><b>Rain</b> brings low cloud, rings on the stream and splashes on the reeds, and the fireflies shelter on the
+  reeds, glowing slowly. It starts with a few drops and builds over several seconds; when it stops, the drops still
+  in the air fall on out.</li>
+  <li><b>Auto:</b> the weather changes now and then by itself. Turned by hand, it arrives within seconds.</li>
+  </ul></li>
+</ul>
+<h3>What you hear</h3>
+<ul>
+<li>A blink is a soft note, and blinks that come together make a small chord.</li>
+<li>Now and then a star slowly brightens, and is heard; a shooting star crosses with a chime.</li>
+<li>Frogs call and answer, crickets fill the night, and an owl hoots far off.</li>
+<li>A full moon brightens the music; a crescent makes it darker and slower, with longer echoes.</li>
+</ul>
+<h3>Moods</h3>
+<ul>
+<li><b>Dusk:</b> the last warm glow over the hills, the first fireflies rising.</li>
+<li><b>Festival:</b> early in the night, when fireflies are most out: a full moon rising over the hills, the most
+fireflies of any mood, blinking together.</li>
+<li><b>Quiet Night:</b> later in the night, as it is.</li>
+<li><b>Deep Night:</b> the darkest sky, a thin crescent or none, many more stars and the Milky Way.</li>
+</ul>
+<h3>Settings</h3>
+<ul>
+<li><b>Instrument:</b> Bell, Furin, Drop, Koto, Warm</li>
+<li><b>Water Type:</b> Off (the default), Bubbles, Brook, White, Pink, Deep, Rain</li>
+<li><b>Phrases:</b>
+  <ul>
+  <li><b>Height:</b> higher fireflies sound higher</li>
+  <li><b>Across:</b> left to right</li>
+  <li><b>Own:</b> each keeps its note</li>
+  <li><b>Loops</b></li>
+  </ul></li>
+<li><b>Nature page:</b>
+  <ul>
+  <li><b>Weather</b></li>
+  <li><b>Owl Calls:</b> how often (0: never)</li>
+  </ul></li>
+</ul>
+<h3>Keys</h3>
+<ul>
+<li><b>White keys:</b> a firefly rises from the grass to your note's height and joins the rhythm.</li>
+<li><b>Black keys:</b>
+  <ul>
+  <li>A note each, low to high across the white keys' range, and a firefly at that height flashes with it (if none
+  is near, the nearest drifts there as it lights).</li>
+  <li>The top one sends a breeze from the left that bends the reeds and carries the fireflies away; new ones rise
+  after it.</li>
+  </ul></li>
+</ul>
+
+<h2 id="instrument">The instrument (FuMi-1)</h2>
+<div class="pics"><img src="../img/gallery/instrument.png" alt="The instrument: Koto, its kanji, the key lights and the HOME page's four knobs"></div>
+<p>Hold HOME for FuMi-1's koto, and hold it again to go back. MIDI in (USB and the TRS jack) plays it chromatically,
+at each note's own velocity, and its keys send notes out on channel 1.</p>
+<table>
+<tr><th scope="row">White keys</th><td>mi fa la ti do × 3 and a top mi, after the Suiko ST-50. The tonics (keys 1, 6, 11, 16) are lit.</td></tr>
+<tr><th scope="row">Black keys</th><td>The upper row fa♯ sol ti♭ do♯ re. SEQ switches them to ornaments: vibrato, trill, damp, strong pluck.</td></tr>
+<tr><th scope="row">SELECT</th><td>本数 (the key)</td></tr>
+<tr><th scope="row">PRESETS</th><td>The instrument: koto, sho, shakuhachi, flutes, kokyū, taiko, hyōshigi, mokugyo, harp</td></tr>
+<tr><th scope="row">ALGORITHM</th><td>The scale: IN, YŌ, MIN'YŌ</td></tr>
+<tr><th scope="row">KNOB 1–4</th><td><ul>
+<li><b>HOME page:</b> 余韻 (ring), trill rate, vibrato depth, reverb</li>
+<li><b>FX page:</b> low cut, high cut, character, reverb size</li>
+<li><b>EDIT page:</b> bend target, bend down, bend time, slide time</li>
+<li><b>SEL held:</b> the tuning page (tuning, depth, 微調, A)</li></ul></td></tr>
+<tr><th scope="row">OCT− · OCT+</th><td><ul>
+<li><b>With a note held:</b> a sprung bend</li>
+<li><b>With nothing held:</b> the octave</li>
+<li><b>Both held 5 s:</b> update mode</li></ul></td></tr>
+<tr><th scope="row">LFO · ARP · GLO</th><td>Vibrato · trill · mono</td></tr>
+<tr><th scope="row">SEL</th><td>Taps between 平均律 (equal temperament) and 純正律 (just intonation)</td></tr>
+<tr><th scope="row">HOME (hold)</th><td>Back to the scene</td></tr>
+<tr><th scope="row">SAVE</th><td>Save. Held 3 s: every setting back to the defaults.</td></tr>
+</table>
+<p class="small">Version __VERSION__. Suiko and ST-50 are names of Suikohsha; M-VAVE and FM-1 are trademarks of their
+owners. ZEN-1 is affiliated with none of them. Site from commit __SHA__.</p>
+</main>
+<footer><p class="small">ZEN-1 is free software (GPL-3.0), with no warranty: <a href="__REPO__">the source</a>. Built on FuMi-1, FoMni and Felucca. M-VAVE and FM-1 are trademarks of their owners; ZEN-1 is affiliated with none of them.</p></footer>
+</body>
+</html>

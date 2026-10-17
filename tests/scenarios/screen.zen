@@ -1,0 +1,92 @@
+# only what changed goes to the screen (render8.c r8_blit): every scene, the HUD on and off, keys, gusts of
+# change; the screen as sent matches the frame as drawn, strip for strip, every frame (expect stale)
+wait 800
+press SAVE
+tap EDIT
+release SAVE
+wait 20000
+tapkey w8
+tapkey b3
+wait 20000
+press SAVE
+tap EDIT
+release SAVE
+wait 20000
+expect stale 0
+expect race 0
+spin PRESET 1
+wait 1200
+press SAVE
+tap EDIT
+release SAVE
+wait 30000
+tapkey w10
+wait 10000
+press SAVE
+tap EDIT
+release SAVE
+wait 20000
+expect stale 0
+expect race 0
+spin PRESET 1
+wait 1200
+wait 40000
+tapkey w12
+tapkey b9
+wait 20000
+expect stale 0
+expect race 0
+# FX the next page (round), tabs over the bar; only the buttons with a use dim (FX, SEL, SEQ, GLO,
+# PLAY, SAVE, HOME, the octaves), the rest dark (REC, EDIT, ENV, ARP, LFO); no flash on the keys
+expect ledFX 1
+expect ledEDIT 0
+# (REC glows dim in testing builds, as the tests run: it shows the load readout; dark in a release)
+expect ledREC 1
+expect ledPLAY 1
+expect ledGLO 1
+expect ledSEL 1
+expect ledARP 0
+expect ledSEQ 1
+expect ledLFO 0
+tap FX
+tap FX
+expect knob14 0
+tap FX
+tap FX
+tap FX
+tap FX
+tap FX
+tap FX
+expect knob14 0
+tap FX
+# (the first press went to the second tab) with the bar not shown, FX shows the first page; the
+# next press the second
+wait 4000
+tap FX
+expect page 0
+tap FX
+expect page 1
+wait 4000
+tap FX
+expect page 0
+# HOME tapped: the status card (battery, scene, mood) for 3 s; the scene goes on (held: the instrument)
+tap HOME
+wait 300
+expect mode 1
+shot status.png
+wait 3000
+# the keys: the chord's white keys dim, the black keys dim (each has a use)
+expect keylightb3 1
+tapkey w8
+wait 30
+expect keylightw8 <2
+wait 100
+shot pagebar.png
+# the testing builds' tools: SAVE held with a button (the load readout), no save and no reset after
+press SAVE
+tap EDIT
+release SAVE
+expect ledFX 1
+expect textfit 0
+expect stale 0
+expect race 0

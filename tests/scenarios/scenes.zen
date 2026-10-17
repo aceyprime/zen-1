@@ -1,0 +1,108 @@
+# each scene its own sounds, and the last scene used comes back at power-on
+# ZEN-1 boots into Sakura; its gusts are the harp (Nature: Gust Sound, a list: Chime <-> Harp)
+wait 800
+expect scene 0
+expect knob13 1
+tap FX
+tap FX
+tap FX
+spin K2 1
+expect knob13 0
+spin K2 1
+expect knob13 1
+# PRESETS: the pond, with its own defaults (Tone Drop, Water Bubbles, Air Insects); saved 3 s after (the journal)
+spin PRESET 1
+wait 700
+expect scene 1
+expect knob2 1
+expect knob9 0
+expect knob8 3
+expect sound2 7
+wait 4000
+expect dirty 0
+expect store_writes 0
+reboot
+wait 800
+expect scene 1
+# the knobs turned are the mood's own now (Natural's), kept across a power-off
+spin K3 3
+expect knob2 4
+tap FX
+tap FX
+spin K4 1
+spin K1 4
+expect knob9 1
+expect knob12 9
+expect tweaks 1
+tap SAVE
+wait 100
+reboot
+wait 800
+expect scene 1
+expect sound2 7
+expect knob2 4
+expect knob9 1
+expect knob12 9
+expect knob15 50
+expect tweaks 1
+# a power-off within 3 s of a change starts in the scene before it (not yet saved)
+spin PRESET -1
+wait 700
+expect scene 0
+wait 1000
+reboot
+wait 800
+expect scene 1
+# PRESETS goes round: Koi -> Hotaru -> Sakura (no Bench); the last one used starts at power-on
+spin PRESET 1
+wait 1000
+expect scene 2
+wait 4000
+reboot
+wait 800
+expect scene 2
+spin PRESET 1
+wait 1000
+expect scene 0
+# every scene's note keys play its selected Tone (partN: the patch part N was given)
+expect part1 0
+spin K3 1
+expect knob2 2
+expect part1 1
+tapkey w8
+spin K3 -1
+expect part1 0
+spin PRESET 1
+wait 1000
+expect scene 1
+expect part1 12
+spin K3 1
+expect part1 103
+spin K3 -1
+spin PRESET 1
+wait 1000
+expect scene 2
+expect part1 105
+spin K3 3
+expect part1 0
+# PRESETS ("twitchy ... skipping a scene"): a click shows the next scene's name, the one playing goes on;
+# half a second after the last click it switches to the one shown
+wait 4000
+expect scene 2
+spin PRESET 1
+wait 150
+spin PRESET 1
+wait 300
+expect scene 2
+wait 700
+expect scene 1
+# a click that comes in while a scene loads, or just after, is let go: one click, one scene
+wait 2000
+spin PRESET 1
+wait 600
+spin PRESET 1
+wait 1500
+expect scene 2
+# only what changed is sent to the screen; the screen as sent always matches the frame as drawn
+expect stale 0
+expect race 0

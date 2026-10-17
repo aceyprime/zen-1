@@ -1,0 +1,42 @@
+# the setup survives a save and a reboot; a bad object gives the defaults
+# ZEN-1 boots into a scene: HOME held, the instrument
+press HOME
+wait 800
+release HOME
+wait 100
+expect mode 0
+turn SELECT 2 80
+spin K1 -20
+tap LFO
+wait 50
+expect par0 6
+expect par8 60
+expect par10 1
+expect dirty 1
+tap SAVE
+wait 50
+expect dirty 0
+# the save went to the journal (no sector erase while playing)
+expect save_seq 1
+expect store_writes 0
+reboot
+wait 100
+expect mode 1
+press HOME
+wait 800
+release HOME
+wait 100
+expect mode 0
+expect par0 6
+expect par8 60
+expect par10 1
+# autosave: a change, then quiet for a while
+spin SELECT -1
+wait 50
+expect dirty 1
+wait 4500
+expect dirty 1
+wait 16000
+expect dirty 0
+expect save_seq 2
+expect store_writes 0

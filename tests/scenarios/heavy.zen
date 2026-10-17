@@ -1,0 +1,16 @@
+# heavy falls: the MORE page's Heavy knob; at 100 a cluster falls about every half minute and sounds a
+# low swell when it lands; at 0, none
+wait 800
+tap FX
+tap FX
+tap FX
+spin K1 60
+expect knob12 100
+wait 50000
+expect heavies >0
+wait 60000
+expect heavies >1
+spin K1 -100
+expect knob12 0
+wait 200000
+expect heavies <6

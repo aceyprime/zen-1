@@ -1,0 +1,47 @@
+# a knob that picks from a list goes round past either end; a number stops at its ends
+# (ZEN-1 boots into the scene)
+wait 800
+# the scene's page: Tone, Koto (1): two to the left -> Ring (4), and one right -> Warm (0)
+spin K3 -2
+expect knob2 4
+spin K3 1
+expect knob2 0
+# Activity (a number): stops at 0
+spin K2 -40
+expect knob1 0
+# Nature: Water is Brook (1): +5 -> Bubbles (0, round past Rain); -1 -> Rain (5). Air is Soft (0): +2 -> Insects (3, past Breeze: Leaves went); +1 -> Soft (0)
+tap FX
+tap FX
+spin K4 5
+expect knob9 0
+spin K4 -1
+expect knob9 5
+spin K3 2
+expect knob8 3
+spin K3 1
+expect knob8 0
+# the instrument: PRESETS Koto (0) one left -> Harp (10), one right -> Koto; ALGORITHM IN (0) one left -> MIN'YO (2)
+press HOME
+wait 800
+release HOME
+wait 100
+expect mode 0
+turn PRESET -1 80
+wait 100
+expect par7 13
+turn PRESET 1 80
+wait 100
+expect par7 0
+turn ALGO -1 80
+wait 100
+expect par1 2
+# the tuning page (SEL held): Tuning SUIKO (1) round to USER (3) and back to EQUAL (0) by turning right
+press SEL
+wait 600
+release SEL
+wait 50
+expect view 3
+spin K1 2
+expect par2 3
+spin K1 1
+expect par2 0

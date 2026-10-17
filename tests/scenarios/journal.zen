@@ -1,0 +1,346 @@
+# the save journal: saves append to flash erased at power-on, so a save never pauses the sound. The
+# journal's flash starts full of leftovers (the host emulates them); a power cut at any point of a save leaves
+# the save before it; when the journal fills, a save falls back to OBJ_PROJ (a sector erase); the newest wins
+wait 800
+expect jr_erases >0
+expect store_writes 0
+# the instrument (HOME held), and a key to save: 1本 -> 2本
+press HOME
+wait 800
+release HOME
+wait 100
+expect mode 0
+turn SELECT 1 80
+wait 100
+expect par0 5
+tap SAVE
+wait 50
+expect dirty 0
+expect store_writes 0
+reboot
+wait 1500
+press HOME
+wait 800
+release HOME
+wait 100
+expect par0 5
+# a power cut on program 1 of the next save (the project in five 64-byte pieces, then the commit): the save before stays
+turn SELECT 1 80
+wait 100
+expect par0 6
+jrtear 1
+tap SAVE
+wait 50
+reboot
+wait 1500
+press HOME
+wait 800
+release HOME
+wait 100
+expect par0 5
+# a power cut on program 2 of the next save (the project in five 64-byte pieces, then the commit): the save before stays
+turn SELECT 1 80
+wait 100
+expect par0 6
+jrtear 2
+tap SAVE
+wait 50
+reboot
+wait 1500
+press HOME
+wait 800
+release HOME
+wait 100
+expect par0 5
+# a power cut on program 3 of the next save (the project in five 64-byte pieces, then the commit): the save before stays
+turn SELECT 1 80
+wait 100
+expect par0 6
+jrtear 3
+tap SAVE
+wait 50
+reboot
+wait 1500
+press HOME
+wait 800
+release HOME
+wait 100
+expect par0 5
+# a power cut on program 4 of the next save (the project in five 64-byte pieces, then the commit): the save before stays
+turn SELECT 1 80
+wait 100
+expect par0 6
+jrtear 4
+tap SAVE
+wait 50
+reboot
+wait 1500
+press HOME
+wait 800
+release HOME
+wait 100
+expect par0 5
+# a power cut on program 5 of the next save (the project in five 64-byte pieces, then the commit): the save before stays
+turn SELECT 1 80
+wait 100
+expect par0 6
+jrtear 5
+tap SAVE
+wait 50
+reboot
+wait 1500
+press HOME
+wait 800
+release HOME
+wait 100
+expect par0 5
+# a power cut on program 6 of the next save (the project in five 64-byte pieces, then the commit): the save before stays
+turn SELECT 1 80
+wait 100
+expect par0 6
+jrtear 6
+tap SAVE
+wait 50
+reboot
+wait 1500
+press HOME
+wait 800
+release HOME
+wait 100
+expect par0 5
+# and saving goes on (the torn slot is skipped, never written over)
+turn SELECT 1 80
+wait 100
+tap SAVE
+wait 50
+reboot
+wait 1500
+press HOME
+wait 800
+release HOME
+wait 100
+expect par0 6
+expect store_writes 0
+# fifty saves: the journal fills (>= 56 a power-on now) and reclaims a sector of itself when full (not
+# OBJ_PROJ's); the last one wins
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT -1 80
+wait 70
+tap SAVE
+wait 30
+turn SELECT 1 80
+wait 70
+tap SAVE
+wait 30
+expect par0 6
+expect store_writes 0
+reboot
+wait 1500
+press HOME
+wait 800
+release HOME
+wait 100
+expect par0 6
+# after that reboot the journal has room again: saves are quick once more
+turn SELECT 1 80
+wait 100
+tap SAVE
+wait 50
+reboot
+wait 1500
+press HOME
+wait 800
+release HOME
+wait 100
+expect par0 7
