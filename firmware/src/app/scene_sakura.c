@@ -29,7 +29,8 @@
 #define SK_MAXT 384                         /* branch tips: every one blossoms (a full crown has ~250) */
 #define SK_WATER 164.0f                     /* the river's far edge: the foot of the far bank's stone wall */
 enum { SK_SKY = 0, SK_MTN = 32, SK_BANK = 48, SK_WAT = 64, SK_SHIM = 80, SK_BARK = 88, SK_BLOS = 96, SK_PET = 112, SK_RIP = 120,
-       SK_CLOUD = 128, SK_CLOUDF = 136, SK_CLOUDE = 140, SK_VIS = 144, SK_BLG = 152, SK_NITE = 248 };   /* (the
+       SK_CLOUD = 128, SK_CLOUDF = 136, SK_CLOUDE = 140, SK_VIS = 144, SK_BLG = 152, SK_MOON = 242, SK_NITE = 248,
+       SK_MGLOW = 253 };   /* (the moon: lit, toward the rim, a sea, in shadow; its glow, three) */   /* (the
        * night's lights: a lantern, its glow, the lights on the water (warm, pink), a star, the moon; the morning's mist) */
 #define SK_NLANT 7   /* (the blossoms'
                                                                                          * groups, 12 x 8) */   /* (the far clouds, the visitors and
@@ -168,6 +169,11 @@ static struct {
     float drops;                            /* how much rain is falling (eased; sc_rain_step) */
     float hold;                             /* the day a mood holds (0..1), or -1: it goes round (Natural) */
     sc_glide_t glide;                       /* the way there */
+    sc_moon_t mn;                           /* the moon: its size and phase this picture (scene.h) */
+    float mtop;                             /* how high its arc climbs */
+    uint8_t moons;                              /* the moons since the picture's own (each day's new one) */
+    float mt;                               /* where it is along its arc (0 rising .. 1 setting), eased: the Night
+                                             * mood brings it clear of the tree, to the right */
     float lan[SK_NLANT], lan_t;             /* each lantern's light (0..1); since the lighting (or the dousing) began */
     uint8_t lan_on, lan_want;               /* lit for the night; each one's turn come (bits) */
     float harp_x, harp_y;                   /* where the last harp note's ring landed */
@@ -1040,19 +1046,16 @@ static void sk_times_draw(surf_t *s, float k)
                                        168, 190, 214, 104, 226, 152};
         static const uint8_t SY[24] = {18, 9, 26, 14, 33, 8, 22, 40, 15, 31, 6, 44, 19, 36, 11, 28, 47, 58, 62, 54, 70, 66,
                                        82, 76};
-        int32_t mx = (int32_t)(206.0f * k), my = (int32_t)(30.0f * k), mr = (int32_t)(6.0f * k);
+        float t = sk.mt;                              /* the moon, when it is up */
+        if (t > -0.05f && t < 1.05f)
+            sc_moon_draw(s, k, &sk.mn, (24.0f + 192.0f * t) * k, (122.0f - sk.mtop * sk_sin(t * 0.5f)) * k, SK_MTN,
+                         SK_MOON, SK_MGLOW, 3);
         for (i = 0; i < 24; i++) {
             int32_t sx = (int32_t)((float)SX[i] * k), sy = (int32_t)((float)SY[i] * k);
             uint8_t *p = s->px + sy * W + sx;
             if (*p < SK_MTN)
                 *p = (uint8_t)(i % 3 == 0 ? SK_NITE + 4 : SK_STAR2);
         }
-        for (y = my - mr; y <= my + mr; y++)
-            for (x = mx - mr; x <= mx + mr; x++) {
-                uint8_t *p = s->px + y * W + x;
-                if ((x - mx) * (x - mx) + (y - my) * (y - my) <= mr * mr && *p < SK_MTN)
-                    *p = SK_NITE + 5;
-            }
     }
     for (i = 0; i < SK_NBON; i++) {                   /* the bonbori (paper lanterns on posts), and their light on the
                                                        * river; by day cream paper under a dark cap */
@@ -1257,13 +1260,27 @@ static void sk_palette(void)
         {   /* the stars (the brighter first) and the moon, from the sky's color to their own as it darkens */
             float f1 = fm_clampf((lit - 0.1f) / 0.4f, 0.0f, 1.0f), f2 = fm_clampf((lit - 0.45f) / 0.45f, 0.0f, 1.0f),
                   fm = fm_clampf((lit - 0.15f) / 0.6f, 0.0f, 1.0f);
-            uint32_t sky = r8_base[SK_SKY + 4];
+            uint32_t sky = r8_base[SK_SKY + 4], msky;
+            {   /* (the moon's glow from the sky at its height) */
+                int si = (int)((122.0f - sk.mtop * sk_sin(fm_clampf(sk.mt, 0.0f, 1.0f) * 0.5f)) * (32.0f / SK_WATER));
+                msky = r8_base[SK_SKY + (si < 0 ? 0 : si > 31 ? 31 : si)];
+            }
             r8_pal_set(SK_NITE + 4, r8_mix(sky, 0xE8ECF8u, f1));
             r8_pal_commit_range(SK_NITE + 4, 1, r8_mix(m, 0xFFFFFFu, f1), wash, (int)((float)amt * (1.0f - f1)));
             r8_pal_set(SK_STAR2, r8_mix(sky, 0xB8C0D8u, f2));
             r8_pal_commit_range(SK_STAR2, 1, r8_mix(m, 0xFFFFFFu, f2), wash, (int)((float)amt * (1.0f - f2)));
-            r8_pal_set(SK_NITE + 5, r8_mix(sky, 0xF2EEDCu, fm));
-            r8_pal_commit_range(SK_NITE + 5, 1, r8_mix(m, 0xFFFFFFu, fm), wash, (int)((float)amt * (1.0f - fm)));
+            {   /* the moon (Hotaru's colors) and its glow, from the sky's color as it darkens */
+                static const uint32_t MC[4] = {0xFBF6E2u, 0xDDD7C0u, 0xD6D0BAu, 0x8A96B4u};
+                int j;
+                for (j = 0; j < 7; j++) {
+                    int g = j - 4, mi = j < 4 ? SK_MOON + j : SK_MGLOW + g;
+                    uint32_t c = j < 3 ? MC[j] : j == 3 ? r8_mix(msky, MC[3], 0.22f)
+                                                        : r8_mix(msky, 0xA8B4D0u, (0.04f + 0.06f * (float)(2 - g)) *
+                                                                                     (0.45f + 0.5f * sk.mn.light));
+                    r8_pal_set(mi, r8_mix(msky, c, fm));
+                    r8_pal_commit_range(mi, 1, r8_mix(m, 0xFFFFFFu, fm), wash, (int)((float)amt * (1.0f - fm)));
+                }
+            }
         }
         r8_pal_commit_range(SK_NITE, 4, 0xFFFFFFu, 0, 0);   /* (the lights on the water: never darkened) */
     }
@@ -1352,6 +1369,11 @@ SC_SMALL static void sk_enter(uint32_t seed, int16_t *kv)
         sk_c[i].on = 0;
         sk_cloud_come(i, x);
     }
+    sc_seed(seed * 2246822519u + 13u);               /* the moon, this picture's (Hotaru's, a little smaller) */
+    sc_moon_pick(&sk.mn, 0.6f);
+    sk.mtop = 82.0f + 18.0f * sc_frand();
+    sk.mt = -9.0f;                                    /* (there at once) */
+    sc_mst_k = -1.0f;
     sc_seed(sk.seed * 2654435761u + 1u);
     cd_init(seed);
     cd_activity((float)kv[SKK_ACT] * 0.01f);
@@ -1456,15 +1478,23 @@ static void sk_heavy_step(float dt)
     }
 }
 
+static void sk_new_moon(void)
+{
+    sc_moon_repick(&sk.mn, 0.6f, sk.seed * 2246822519u + 977u * ++sk.moons);
+    sc_mst_k = -1.0f;
+}
 static void sk_step(uint32_t dt_ms)
 {
     float dt = (float)dt_ms * 0.001f, a = (float)sk.kv[SKK_ACT] * 0.01f;
     int i, j;
     uint32_t cdt = dt_ms;
     sk.t += dt;
-    if (sk.hold < 0.0f) {   /* the day goes round: half an hour (Natural; was 12 min). (No new tree at
+    if (sk.hold < 0.0f) {   /* the day goes round: half an hour (Natural). (No new tree at
                              * midnight, PLAY grows one) */
+        float d0 = sk.day;
         sk.day += dt * (1.0f / 1800.0f);
+        if (d0 < 0.25f && sk.day >= 0.25f)            /* (at noon, unseen: tonight's moon, another phase) */
+            sk_new_moon();
         if (sk.day >= 1.0f) {
             sk.day -= 1.0f;
             cd_dawn();                                /* a new day: perhaps a new key or scale (the slow drift) */
@@ -1472,6 +1502,13 @@ static void sk_step(uint32_t dt_ms)
         sc_glide_at(&sk.glide, sk.hold);
     } else                                            /* a mood holds its time: there in 20 s, gently, forward */
         sk.day = sc_glide(&sk.glide, sk.day, sk.hold, dt);
+    {   /* the moon along its arc: where its phase has it tonight (rising on the left at the hour it really rises);
+         * in the Night mood clear of the tree, high on the right; eased there as the mood glides */
+        float d = sk.day - fm_floorf(sk.day),
+              t = sc_mood_base(sk.kv[SKK_MOOD], SK_NMOOD) == 4 ? 0.82f
+                  : sc_moon_t_of(d >= 0.5f ? (d - 0.5f) * 2.0f : (d + 0.5f) * 2.0f, sk.mn.off, sk.mn.side);
+        sk.mt = sk.mt < -8.0f ? t : sk.mt + fm_clampf(t - sk.mt, -0.035f * dt, 0.035f * dt);
+    }
     sk_lanterns_step(dt);
     cd_step(cdt);
     {   /* Natural: the scale with the light: Yo from dawn through the afternoon, Min'yo from golden hour */
@@ -1868,7 +1905,7 @@ static void sk_cloud_make(float k, int c)
     int i, far = c < 2, nsh = far ? 4 : 8;
     uint8_t c0 = far ? SK_CLOUDF : SK_CLOUD, *st = sk_cst[c];
     float base = (sk_c[c].y + sk_c[c].base) * k, top = (sk_c[c].y + sk_c[c].top) * k;
-    int32_t ox = (int32_t)fm_floorf(sk_c[c].x * k) - SK_CSW / 2, oy = (int32_t)fm_floorf((sk_c[c].y - 31.0f) * k);
+    int32_t xi = (int32_t)fm_floorf(sk_c[c].x * k), ox = xi - SK_CSW / 2, oy = (int32_t)fm_floorf((sk_c[c].y - 31.0f) * k);
     for (i = 0; i < SK_CSW * SK_CSH; i++)
         st[i] = 0;
     sk_cso[c][0] = (int16_t)ox;
@@ -1877,7 +1914,8 @@ static void sk_cloud_make(float k, int c)
     sk_cs_ok[c] = 1;
     for (i = 0; i < sk_c[c].np; i++) {               /* the base row, then the domes and turrets over it */
         float br = 1.0f + 0.06f * sk_sin(sk.t * 0.02f + sk_c[c].pp[i]);
-        float cx = (sk_c[c].x + sk_c[c].px[i] + 1.5f * sk_sin(sk.t * 0.013f + sk_c[c].pp[i] * 1.7f)) * k,
+        float cx = (float)xi + (sk_c[c].px[i] + 1.5f * sk_sin(sk.t * 0.013f + sk_c[c].pp[i] * 1.7f)) * k,   /* (at
+                                                       * its whole pixel: made again, it is where it was drawn) */
               cy = (sk_c[c].y + sk_c[c].py[i]) * k, r = sk_c[c].pr[i] * br * k, ry = r * 0.85f;
         int32_t x, y, x0 = (int32_t)(cx - r - 1.0f), x1 = (int32_t)(cx + r + 1.0f), y0 = (int32_t)(cy - ry - 1.0f),
                 y1 = (int32_t)(cy + ry + 1.0f);
@@ -1899,14 +1937,14 @@ static void sk_cloud_make(float k, int c)
                 continue;
             for (x = x0; x <= x1; x++) {
                 float dx = ((float)x + 0.5f - cx) * ir, d = dx * dx + dy2, lam, sh,
-                      bx = base + (0.8f * sk_sin((float)x / k * 0.043f + sk_c[c].pp[0]) +
-                                   0.4f * sk_sin((float)x / k * 0.11f + sk_c[c].pp[1])) * k;   /* (the base:
+                      bx = base + (0.8f * sk_sin((float)(x - xi) / k * 0.043f + sk_c[c].pp[0]) +
+                                   0.4f * sk_sin((float)(x - xi) / k * 0.11f + sk_c[c].pp[1])) * k;   /* (the base:
                                                        * level, wavering a pixel) */
                 int f;
                 if (d >= 1.0f || (float)y + 0.5f > bx)
                     continue;                          /* (below the base: the sky, cleanly) */
                 if (d > 0.84f && dy > -0.35f &&       /* the sides soften into the sky; the sunlit tops stay crisp */
-                    !r8_dith(x, y, (int)((1.0f - d) * (16.0f / 0.16f))))
+                    !r8_dith(x - xi, y, (int)((1.0f - d) * (16.0f / 0.16f))))
                     continue;
                 /* each dome lit from the sun high on the left: its own roundness, and the whole cloud darker toward
                  * its flat base, which is its darkest (a band along it) */
@@ -1916,7 +1954,8 @@ static void sk_cloud_make(float k, int c)
                 if (bx - (float)y < 1.8f * k)
                     sh = fm_maxf(sh, 0.9f);
                 f = (int)(fm_clampf(sh, 0.0f, 0.99f) * (float)(nsh - 1) * 16.0f);   /* (dithered between steps) */
-                row[x] = (uint8_t)(c0 + (f >> 4) + r8_dith(x, y, f & 15));   /* (the later puff in front) */
+                row[x] = (uint8_t)(c0 + (f >> 4) + r8_dith(x - xi, y, f & 15));   /* (the later puff in front; the
+                                                       * dither the cloud's own, so it moves with it) */
             }
         }
     }
@@ -1978,40 +2017,6 @@ static void sk_ring(surf_t *s, float cx, float cy, float rx, float ry, uint8_t c
 static float sk_daylight(void)                /* 1 by day .. 0 at night */
 {
     return fm_clampf(sk_sin(sk.day) * 2.0f + 0.3f, 0.0f, 1.0f);
-}
-
-/* komorebi: the light through the tree (the sunbeams gone):
- *   the shade   a pool on the near water under the crown, its outline by column (shifted a little right, the sun
- *               high on the left) seen at an angle, soft-edged, gone well before the far bank; spots of sun drift
- *               slowly in it 
- *   glints      a wind on the open water: sparkles, more in a gust
- * By day, and less in a shower. Cheap: the shade only on its pool's rows, no float work per pixel there */
-static void sk_light_draw(surf_t *s, float k)
-{
-    float day = sk_daylight() * (1.0f - sk.rain);
-    int32_t W = s->w, wy = (int32_t)(SK_WATER * k) + 1;
-    int i;
-    if (day < 0.05f)
-        return;
-    {   /* the sun on the water: a path of glitter under it. High in the afternoon (on the left): broad and near; low at
-         * golden hour (to the right, over the far hills): a narrow path reaching to the far bank. More in a gust */
-        float d = sk.day - fm_floorf(sk.day), elev = fm_clampf(sk_sin(d), 0.0f, 1.0f),
-              xs = 20.0f + 180.0f * fm_clampf((d - 0.04f) / 0.44f, 0.0f, 1.0f),
-              gold = fm_clampf(1.0f - fm_fabsf(d - 0.45f) / 0.1f, 0.0f, 1.0f);
-        int n = (int)(day * (2.0f + 7.0f * sk.gust + 2.0f * (float)sk.kv[SKK_ACT] * 0.01f + 7.0f * gold + 3.0f * elev));
-        for (i = 0; i < n; i++) {
-            float u = sc_frand(), yw = SK_WATER + 2.0f + (236.0f - SK_WATER) * (elev > 0.5f ? sk_sqrt(u) : u),
-                  near = (yw - SK_WATER) / (240.0f - SK_WATER),
-                  xw = xs + (sc_frand() + sc_frand() + sc_frand() - 1.5f) * 1.4f * (4.0f + 26.0f * near) * (0.35f + 1.3f * elev);
-            int32_t gx = (int32_t)(xw * k), gy = (int32_t)(yw * k);
-            uint8_t *p;
-            if (gx < 0 || gx >= W || gy < wy || gy >= s->h)
-                continue;
-            p = s->px + gy * W + gx;
-            if (sk_wet(*p) && sk_shade[(int)xw < 240 && xw >= 0.0f ? (int)xw : 239] < 60)
-                *p = SK_SHIM + 7;
-        }
-    }
 }
 
 /* the visitors: a butterfly fluttering by; a bush warbler flying in to a branch, perched, singing */
@@ -2120,6 +2125,9 @@ static void sk_draw(void)
                 int32_t sx = x - off;
                 uint8_t c = b[sx < 0 ? 0 : sx >= W ? W - 1 : sx];
                 if ((uint8_t)(p[x] - SK_WAT) >= 16u && (uint8_t)(p[x] - SK_REF) >= 16u)
+                    continue;
+                if (!sk_wet(c))                       /* (beside the trunk: the water there as it is, not light
+                                                       * water in place of the trunk's) */
                     continue;
                 if (c >= SK_REF && c < SK_REF + 16)
                     p[x] = c;
@@ -2256,7 +2264,6 @@ static void sk_draw(void)
     }
     sk_times_draw(s, k);                              /* (the morning's mist, the night's lights) */
     SC_PT(1);
-    sk_light_draw(s, k);
     SC_PT(2);
     for (i = 0; i < SK_MAXR; i++)
         if (sk_r[i].t > 0.0f && sk_r[i].t < 1.8f) {
@@ -2482,6 +2489,8 @@ SC_SMALL static void sk_regrow(uint32_t seed)
 {
     sk.seed = seed | 1u;
     sk_background();
+    sk_new_moon();                                    /* (a new picture: its own moon) */
+    sk.mt = -9.0f;
 }
 
 /* knobs saved by an older sound version: the newer defaults once (Gusts the harp, Air is the soft breeze, the brook at

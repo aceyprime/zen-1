@@ -25,7 +25,7 @@ FoMni and FuMi-1 do; the installer can put M-VAVE's own firmware back. Installin
 | Scene | What happens | Moods |
 |---|---|---|
 | **Sakura 桜** | A pale Somei-Yoshino cherry over a narrow stream, its stone-walled far bank lined with cherries and paper lanterns under layered spring hills, all mirrored in the water; petal rafts drift by. Each petal that lands plays a koto note, pitched by where it lands; gusts shake loose a shower with a harp run; a bush warbler sings; at night the tree is lit and lanterns glow along the far bank | Morning, Afternoon, Golden Hour, Night |
-| **Koi 鯉** | Koi of the real varieties glide, hover and follow each other in a garden pond (a new shape each picture), and every bite of food is a note (deep in the middle low, near the rim high). Japanese pond frogs, a shishi-odoshi, rain rings, a stone lantern at night; uneaten food can come back later as a bowl note | Feeding, Still Pond, Rain, Night |
+| **Koi 鯉** | Koi of the real varieties glide, hover and follow each other in a garden pond (a new shape each picture), and every bite of food is a note (deep in the middle low, near the rim high). Japanese pond frogs, a shishi-odoshi, rain rings, two stone lanterns at night; uneaten food can come back later as a bowl note | Feeding, Still Pond, Rain, Night |
 | **Hotaru 蛍** | Fireflies over a stream, each blinking on its own clock until the field falls into one shared pulse. A moon from NASA's lunar map takes the path its phase really takes; mist, rain, shooting stars, an owl | Dusk, Festival, Quiet Night, Deep Night |
 
 Every scene also has **Natural**, a whole day or night in half an hour with the music following the light. Every
@@ -73,7 +73,7 @@ See [BUILDING.md](BUILDING.md) and [docs/dev-environment.md](docs/dev-environmen
 ```
 tests/run_tests.sh                    # host tests, the simulator scenarios, the browser build, the tools
 ./build.sh                            # build/zen1.fwsc (Docker, JieLi toolchain)
-./build.sh --release 1.0.2         # a release package, build/zen-1-1.0.2.fwsc
+./build.sh --release 1.1         # a release package, build/zen-1-1.1.fwsc
 web/emu/build.sh                      # the browser emulator, and the audition bench for developers (Emscripten)
 build/host/zen_host SCRIPT OUTDIR    # the whole app on a computer, from a script (tests/scenarios/*.zen)
 tools/site_gallery.sh                 # the site's screenshots, from the simulator

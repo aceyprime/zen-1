@@ -7,8 +7,8 @@ expect breaths >9
 expect drones >0
 wait 540000
 expect quiets >0
-# a rest is 8-18 s: never more than ~22 s with no note in ten minutes
-expect notegap <23
+# a rest is 8-18 s: never more than ~25 s with no note in ten minutes (a rest and a slow phrase's wait)
+expect notegap <26
 expect sits >0
 expect drones >0
 # MOOD: Melody to Loops: the scene's notes from the four loops

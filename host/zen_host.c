@@ -15,6 +15,7 @@
  *   master N                     MASTER pot 0..4096
  *   midi B0 B1 B2                incoming USB MIDI message (hex bytes)
  *   wav FILE | wavstop           start / stop recording the output
+ *   koifrog                      Koi: print each frog's state and place
  *   peakreset                    restart the output peak (expect peak_db_min / peak_db_max)
  *   shot FILE.png                save the screen
  *   leds                         print the lit buttons and keys
@@ -375,6 +376,13 @@ static void wav_open(const char *path)
         fwrite(h, 1, 44, wav);
     wav_frames = 0;
 }
+#if __has_include("zen_host_extra.h")   /* local extras, if present: more commands (host_extra_cmd) and a step each
+                                         * simulated ms (host_extra_ms) */
+#include "zen_host_extra.h"
+#else
+static void host_extra_ms(void) {}
+static int host_extra_cmd(const char *cmd, const char *a, const char *b, const char *dir) { return 0; }
+#endif
 static void wav_close(void)
 {
     uint32_t bytes = wav_frames * 4, v;
@@ -462,6 +470,7 @@ static void run_ms(uint32_t ms)
             }
             audio_due_ms += 256.0 * 1000.0 / 44100.0;
         }
+        host_extra_ms();
         if (now_ms >= ui_due) {
             ui_due = now_ms + 16;
             jr_progs_frame = 0;
@@ -916,6 +925,15 @@ int main(int argc, char **argv)
             wav_open(out);
         } else if (!strcmp(cmd, "wavstop"))
             wav_close();
+        else if (host_extra_cmd(cmd, a, b, dir))
+            ;
+        else if (!strcmp(cmd, "koifrog")) {     /* Koi: each frog's state (0 in the water, 1 hopping on, 2 sitting,
+                                                     * 3 hopping off) and place */
+            int i;
+            for (i = 0; i < KP_NFROG; i++)
+                printf("  koifrog %d: %d %.0f %.0f from-open %d into-open %d\n", i, kp_fg[i].st, kp_fg[i].x, kp_fg[i].y,
+                       kp_open(kp_fg[i].x0, kp_fg[i].y0), kp_open(kp_fg[i].x1, kp_fg[i].y1));
+        }
         else if (!strcmp(cmd, "peakreset"))
             peak_out = 0.0f;
         else if (!strcmp(cmd, "shot")) {

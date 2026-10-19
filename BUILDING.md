@@ -44,8 +44,8 @@ On Linux x86-64 the toolchain runs natively and Docker is not needed.
 `JIELI_TOOLCHAIN` and `AC79_SDK` override the default locations
 (`~/.jieli/toolchain`, `~/fw-AC79_AIoT_SDK`).
 
-`./build.sh --release 1.0.2` makes a release build; the package is `build/zen-1-1.0.2.fwsc` (identity
-`FM-1_6010002`; dev builds are `FM-1_600`). Release builds leave out the testing HUD.
+`./build.sh --release 1.1` makes a release build; the package is `build/zen-1-1.1.fwsc` (identity
+`FM-1_6010100`; dev builds are `FM-1_600`). Release builds leave out the testing HUD.
 
 On macOS with podman instead of Docker, put a `docker` script that runs `exec podman "$@"` first
 on your PATH. `OM_JOBS` (default 4) limits parallel compiles: a podman machine drops
@@ -88,7 +88,7 @@ script (the command list is at the top of `host/zen_host.c`).
 short form:
 
 - The unit reports a known-good identity: `python3 tools/fm1_install.py --info` (stock V15 is `FM-1_015`;
-  ZEN-1 1.0.2 is `FM-1_6010002`). Custom firmware expects the unit to have been on stock V15.
+  ZEN-1 1.1 is `FM-1_6010100`). Custom firmware expects the unit to have been on stock V15.
 - You have the official `FM-1.fwsc` (V15) on your computer; its SHA-256 is
   `db1642b2b6fa5c2cccb11ffd13878068bb28601678d3644049f99dc40e7edb8a`. It is the way home; the installer
   page's "Back to the stock firmware" takes exactly that file.
@@ -104,7 +104,7 @@ From the command line
 (needs `pip3 install mido python-rtmidi`):
 
 ```
-python3 tools/fm1_install.py build/zen-1-1.0.2.fwsc
+python3 tools/fm1_install.py build/zen-1-1.1.fwsc
 python3 tools/fm1_install.py --info          # identity of the connected FM-1
 ```
 

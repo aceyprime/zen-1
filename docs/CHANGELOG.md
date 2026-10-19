@@ -4,6 +4,32 @@ Identities are `FM-1_6` + major, minor and patch as two digits each; the FM-1 re
 (`python3 tools/fm1_install.py --info`). FuMi-1's own releases, up to 1.0.3 where ZEN-1 began, are in
 [its changelog](https://github.com/cartesive/fumi-1/blob/main/docs/CHANGELOG.md).
 
+## 1.1 — `FM-1_6010100`
+
+- **Sakura:** the clouds drift smoothly, a pixel at a time (slow ones had flickered back and forth as they went);
+  the water right beside the tree's trunk no longer shows still specks of pale blue; the sun's glitter on the water
+  is gone (it read as static).
+- **Sakura at night:** the moon is Hotaru's (it had been a plain white disc): its face from a real map, a new phase and
+  size each picture, a soft glow; it rises over the hills at the hour its phase really does, crosses behind the tree
+  and the clouds and sets toward dawn. In the Night mood it stands clear of the tree, on the right.
+- **A new moon each night (Natural):** Sakura and Hotaru take another phase each time the cycle comes round, so a
+  long listen sees the moon change, but never in sight: Sakura's changes at noon; Hotaru's moon pales into the dawn
+  twilight and the next night's comes out of the dusk.
+- **Koi:** the frogs drawn anew: no dark outline (they read as black lines on the pads), shaded in their own
+  colors with a wet shine and a small shadow, their legs folded at their sides, raised eyes. They face the way they
+  jump, leap with their legs stretched out and their shadow on the water below, make the pad bob as they land and
+  splash as they dive in, and blink, breathe and turn a little while they sit. They always come up out of open water and
+  dive back into it, never onto or off the stones at the edge.
+- **Koi at night:** the lantern's glow on the moss and its light on the water drawn anew (a smooth warm wash, and
+  shimmering streaks on the ripples, in place of dotted patterns), a flame in its firebox; and a second lantern, a
+  low snow-viewing lantern (yukimi-dōrō), at the top right. Each lantern's light breathes slowly on its own, never in
+  step with the other.
+- **Hotaru:** the clouds drawn anew: soft wisps in the sky's own colors (no cross-hatching), with uneven edges,
+  silvered near the moon, veiling it smoothly as they cross. The mist drawn anew the same way: smooth fog (no
+  cross-hatching) in drifting wisps that thicken and part, a little brighter under the moon, rising and thinning toward
+  dawn; the reeds stand in front of it, a firefly's light spreads softly in it, and the farmhouse window glows warm
+  through it.
+
 ## 1.0.2 — `FM-1_6010002`
 
 - **Sakura:** the water behind the tree's trunk moves like the rest of the river (its reflection had stayed still),

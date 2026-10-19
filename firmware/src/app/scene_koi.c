@@ -45,7 +45,8 @@
 enum { KP_DEEP = 0, KP_SHIM = 32, KP_GROUND = 40, KP_STONE = 48, KP_LILY = 56, KP_FLOWER = 64, KP_BAMBOO = 72, KP_WHITE = 80,
        KP_FOOD = 100, KP_PETAL = 104, KP_PEL = 108, KP_RIP = 112, KP_PLANT = 120,
        KP_MID = 128, KP_LOW = 148, KP_FROG = 168, KP_SUB = 176, KP_SKY = 184, KP_GRAV = 185, KP_FROG2 = 192, KP_REFL = 200,
-       KP_NITE = 232, KP_TREE = 237 };
+       KP_NITE = 232, KP_TREE = 237, KP_LAMP = 245 };   /* (the lanterns' light: on the moss, three; on the water,
+                                                       * two; a roof's lit rim; the flame) */
 /* the koi's colors (KP_WHITE + these, 20 of them: KP_MID and KP_LOW hold them again under the water): cream, a deep
  * crimson-orange, lacquer black, metallic gold, an asagi's blue-gray and its net, orange, (spare: KC_BR0/1), yellow,
  * platinum, and the fins (pale, the water showing through) */
@@ -61,6 +62,9 @@ static const uint8_t KV_WEIGHT[KV_N] = {30, 16, 17, 6, 10, 10, 6, 5};   /* (the 
                                                      * the firebox, the moon on the water) */
 #define KP_TORO_X 24.0f                             /* the stone lantern (toro), bottom left on the moss */
 #define KP_TORO_Y 214.0f
+/* a snow-viewing lantern (yukimi-doro), top right (under the maple when it is that side) */
+#define KP_YUKI_X 214.0f
+#define KP_YUKI_Y 30.0f
                                             /* (the second frog; the pond with a cloud's light on it) */   /* (the koi's colors a little
                                                                                 * and further under the water; the
                                                                                 * frogs; what lies under the water; the
@@ -169,10 +173,12 @@ static struct {
     float x, y, r, notch;
     int flower;                             /* 0 none, 1 a white water lily, 2 a pink one */
     uint8_t shade, curl;                    /* its green; where its edge curls up (a lighter rim there) */
+    float dip;                              /* a frog landing on it or leaving: it bobs, settling */
 } kp_pad[KP_MAXPAD];
 static struct {                             /* frogs on the lily pads */
     float x, y, x0, y0, x1, y1, t, sit, croak, puff;
-    int st, pad, face;                      /* 0 in the water, 1 hopping on, 2 sitting, 3 hopping off */
+    float fx, fy, rot, blink;               /* which way it faces; a turn still to make (turns); till it blinks */
+    int st, pad;                            /* 0 in the water, 1 hopping on, 2 sitting, 3 hopping off */
     int sp;                                 /* its species (KP_SPECIES) */
     uint32_t mark;                          /* its own markings (where its spots are) */
 } kp_fg[KP_NFROG];
@@ -200,7 +206,8 @@ static struct {
     int npad;
     float t, day, food_acc, petal_next, surf_next, sh_fill, sh_tip, sh_period;
     int sh_back;                            /* the shishi-odoshi is swinging back up */
-    float frog_next, br_x, br_y, br_t, br_dur, br_next;   /* a frog's next hop; a breeze's patch of ripples */
+    float frog_next, br_x, br_y, br_t, br_dur, br_next;
+    float lamp[2], lamp_to[2], lamp_next[2];   /* each lantern's light, breathing on its own (random, eased) */   /* a frog's next hop; a breeze's patch of ripples */
     float hold;                             /* the day a mood holds, or -1: it goes round (Natural) */
     sc_glide_t glide;                       /* the way there */
     uint32_t frogs, plops, breezes;
@@ -547,58 +554,88 @@ SC_SMALL static void kp_koi_count(int n)
 /* how far into the night (as Sakura's): 0 by day .. 1 dark, the lantern lit */
 static float kp_night(void) { return fm_clampf(-fm_sin_turns(kp.day) * 2.5f + 0.1f, 0.0f, 1.0f); }
 
-/* the stone lantern on the moss, seen from above: its roof, the firebox under it showing toward us; at
- * night lit, its glow on the moss and its light on the dark water, wavering */
-static void kp_toro_draw(surf_t *s, float k)
+/* a lantern's light at night: a warm wash on the moss round it, fading smoothly (three steps, each mixed only
+ * with the next); on the nearest stones of the rim; and on the water toward it, in short broken streaks on the
+ * ripples' crests that shimmer and drift, brightest nearest the lantern */
+static void kp_toro_light(surf_t *s, float k, float x, float y, int n)
 {
-    float nt = kp_night(), x = KP_TORO_X, y = KP_TORO_Y;
+    float nt = kp_night(), cx = KP_CX + (x - KP_CX) * 0.64f, cy = KP_CY + (y - KP_CY) * 0.64f, lv = kp.lamp[n],
+          ir = 1.0f / (784.0f * (0.86f + 0.14f * lv) * (0.86f + 0.14f * lv));   /* (its reach, breathing) */
     int32_t px, py;
-    if (nt > 0.05f) {
-        for (py = (int32_t)((y - 22.0f) * k); py <= (int32_t)((y + 22.0f) * k); py++)   /* the glow on the moss */
-            for (px = (int32_t)((x - 22.0f) * k); px <= (int32_t)((x + 22.0f) * k); px++) {
-                float dx = (float)px / k - x, dy = (float)py / k - y - 3.0f, a = 1.0f - (dx * dx + dy * dy) / 484.0f;
-                uint8_t *q;
-                if (px < 0 || py < 0 || px >= s->w || py >= s->h || a <= 0.0f)
-                    continue;
-                q = s->px + py * s->w + px;
-                if (*q >= KP_GROUND && *q < KP_GROUND + 8 && r8_dith(px, py, (int)(a * a * nt * 7.0f)))
-                    *q = KP_NITE + 1;
-            }
-        {   /* its light on the water: a warm patch near the rim toward it, wavering */
-            float cx = KP_CX + (x - KP_CX) * 0.62f, cy = KP_CY + (y - KP_CY) * 0.62f, fl = 0.85f + 0.15f * fm_sin_turns(kp.t * 1.7f);
-            for (py = (int32_t)((cy - 16.0f) * k); py <= (int32_t)((cy + 16.0f) * k); py++)
-                for (px = (int32_t)((cx - 22.0f) * k); px <= (int32_t)((cx + 22.0f) * k); px++) {
-                    float dx = ((float)px / k - cx) / 22.0f, dy = ((float)py / k - cy) / 16.0f,
-                          w = 0.6f + 0.4f * fm_sin_turns((float)py / k * 0.35f + kp.t * 0.5f),
-                          a = (1.0f - dx * dx - dy * dy) * w * fl *
-                              (fm_sin_turns((float)py / k * 0.45f + (float)px / k * 0.04f + kp.t * 0.3f) > 0.2f ? 1.0f : 0.0f);   /* (in
-                                                       * broken streaks across, as light on water lies) */
-                    uint8_t *q;
-                    if (px < 0 || py < 0 || px >= s->w || py >= s->h || a <= 0.0f)
-                        continue;
-                    q = s->px + py * s->w + px;
-                    if ((*q < KP_DEEP + 32 || (*q >= KP_REFL && *q < KP_REFL + 32)) && r8_dith(px, py, (int)(a * nt * 11.0f)))
-                        *q = KP_NITE + 2;
-                }
+    if (nt < 0.05f)
+        return;
+    for (py = (int32_t)((y - 28.0f) * k); py <= (int32_t)((y + 28.0f) * k); py++)   /* the moss and the stones */
+        for (px = (int32_t)((x - 28.0f) * k); px <= (int32_t)((x + 28.0f) * k); px++) {
+            float dx = ((float)px + 0.5f) / k - x, dy = ((float)py + 0.5f) / k - y - 4.0f,
+                  a = 1.0f - (dx * dx + dy * dy) * ir, v;
+            uint8_t *q;
+            int lv;
+            if (px < 0 || py < 0 || px >= s->w || py >= s->h || a <= 0.0f)
+                continue;
+            q = s->px + py * s->w + px;
+            v = a * a * 3.2f;
+            lv = (int)v;
+            lv += r8_dith(px, py, (int)((v - (float)lv) * 16.0f));
+            if (lv <= 0)
+                continue;
+            if (*q >= KP_GROUND && *q < KP_GROUND + 8)
+                *q = (uint8_t)(KP_LAMP + (lv > 3 ? 3 : lv) - 1);
+            else if (*q >= KP_STONE + 3 && *q < KP_STONE + 8 && lv >= 2 && a < 0.8f)
+                *q = KP_LAMP + 5;                     /* (a stone's face toward it; not the lantern's own roof) */
         }
-    }
-    r8_disc(s, (x + 3.5f) * k, (y + 4.5f) * k, 9.0f * k, (uint8_t)(KP_GROUND + 7));   /* its shadow */
-    r8_quad(s, x * k, (y + 7.0f) * k, 4.5f * k, 3.0f * k, 0.0f, (uint8_t)(KP_NITE + 3));   /* the firebox: stone by
-                                                       * day, its light coming up with the dark */
-    {   /* the roof (kasa) from above: eight facets rising to the jewel, lit from the upper left, its corners turned
-         * up */
-        int f;
-        for (f = 0; f < 8; f++) {
-            float a0 = (float)f / 8.0f + 0.0625f, a1 = a0 + 0.125f, r = 7.5f, am = a0 + 0.0625f,
-                  lit = fm_sin_turns(am + 0.25f) + fm_sin_turns(am);   /* (facing the upper left: lit) */
-            r8_tri(s, x * k, y * k, (x + r * fm_sin_turns(a0 + 0.25f)) * k, (y + r * fm_sin_turns(a0)) * k,
-                   (x + r * fm_sin_turns(a1 + 0.25f)) * k, (y + r * fm_sin_turns(a1)) * k,
-                   (uint8_t)(KP_STONE + (lit < -0.5f ? 1 : lit < 0.5f ? 3 : 5)));
-            r8_pset(s, (int32_t)((x + 8.2f * fm_sin_turns(a0 + 0.25f)) * k), (int32_t)((y + 8.2f * fm_sin_turns(a0)) * k), KP_STONE + 2);
+    for (py = (int32_t)((cy - 18.0f) * k); py <= (int32_t)((cy + 18.0f) * k); py++)   /* the water */
+        for (px = (int32_t)((cx - 24.0f) * k); px <= (int32_t)((cx + 24.0f) * k); px++) {
+            float xw = ((float)px + 0.5f) / k, yw = ((float)py + 0.5f) / k, dx = (xw - cx) / 24.0f, dy = (yw - cy) / 18.0f,
+                  ex = (xw - x) * (1.0f / 70.0f), ey = (yw - y) * (1.0f / 70.0f),
+                  a = (1.0f - dx * dx - dy * dy) * (1.2f - ex * ex - ey * ey) * (0.75f + 0.25f * lv),
+                  crest = fm_sin_turns(yw * 0.42f + 0.6f * fm_sin_turns(xw * 0.045f + kp.t * 0.11f) - kp.t * 0.32f),
+                  brk = fm_sin_turns(xw * 0.13f - yw * 0.05f + kp.t * 0.21f);
+            uint8_t *q;
+            if (px < 0 || py < 0 || px >= s->w || py >= s->h || a <= 0.12f || crest < 0.55f - 0.25f * a || brk < -0.4f)
+                continue;
+            q = s->px + py * s->w + px;
+            if (*q < KP_DEEP + 32 || (*q >= KP_REFL && *q < KP_REFL + 32))
+                *q = (uint8_t)(a > 0.5f && crest > 0.85f ? KP_LAMP + 4 : KP_LAMP + 3);
         }
+}
+
+/* a stone lantern on the moss, seen from above: its shadow; its roof (facets lit from the upper left, the corners
+ * turned up, the jewel on top); its firebox under the roof toward us, lit at night (a flame in it, the roof's
+ * underside warm along its near rim). Two kinds: the tall kasuga (eight facets) at the bottom left; the low
+ * yukimi (a wide six-sided roof on three splayed legs) at the top right */
+SC_SMALL static void kp_toro_draw(surf_t *s, float k, float x, float y, int yuki)
+{
+    float nt = kp_night(), r = yuki ? 10.0f : 7.5f, n = yuki ? 6.0f : 8.0f;
+    int f;
+    r8_disc(s, (x + 3.5f) * k, (y + 4.5f) * k, (r + 1.5f) * k, (uint8_t)(KP_GROUND + 7));   /* its shadow */
+    if (yuki)
+        for (f = 0; f < 3; f++) {                     /* its legs' feet, splayed out under the roof */
+            float a = 0.18f + (float)f / 3.0f;
+            r8_disc(s, (x + 11.5f * fm_sin_turns(a + 0.25f)) * k, (y + 11.5f * fm_sin_turns(a)) * k, 1.6f * k,
+                    (uint8_t)(KP_STONE + 2));
+        }
+    r8_quad(s, x * k, (y + r - 0.5f) * k, 5.0f * k, 3.4f * k, 0.0f, (uint8_t)(KP_STONE + 1));   /* the firebox's
+                                                       * frame, then its opening: stone by day, lit with the dark */
+    r8_quad(s, x * k, (y + r - 0.5f) * k, 3.6f * k, 2.2f * k, 0.0f, (uint8_t)(KP_NITE + 3));
+    if (nt > 0.3f)
+        r8_disc(s, x * k, (y + r - 0.2f) * k, 0.9f * k, KP_LAMP + 6);   /* (the flame) */
+    for (f = 0; f < (int)n; f++) {                    /* the roof (kasa) from above, facets rising to the jewel */
+        float a0 = (float)f / n + 0.5f / n, a1 = a0 + 1.0f / n, am = a0 + 0.5f / n,
+              lit = fm_sin_turns(am + 0.25f) + fm_sin_turns(am);   /* (facing the upper left: lit) */
+        r8_tri(s, x * k, y * k, (x + r * fm_sin_turns(a0 + 0.25f)) * k, (y + r * fm_sin_turns(a0)) * k,
+               (x + r * fm_sin_turns(a1 + 0.25f)) * k, (y + r * fm_sin_turns(a1)) * k,
+               (uint8_t)(KP_STONE + (lit < -0.5f ? 1 : lit < 0.5f ? 3 : 5)));
+        r8_pset(s, (int32_t)((x + (r + 0.7f) * fm_sin_turns(a0 + 0.25f)) * k), (int32_t)((y + (r + 0.7f) * fm_sin_turns(a0)) * k),
+                KP_STONE + 2);
     }
-    r8_disc(s, x * k, y * k, 2.0f * k, (uint8_t)(KP_STONE + 3));   /* the jewel on top (hoju) */
-    r8_disc(s, (x - 0.5f) * k, (y - 0.6f) * k, 1.0f * k, (uint8_t)(KP_STONE + 1));
+    if (nt > 0.15f)                                   /* the roof's near rim, lit from under it */
+        for (f = 0; f < 14; f++) {
+            float a = 0.13f + 0.24f * (float)f / 13.0f;
+            r8_pset(s, (int32_t)((x + (r - 0.6f) * fm_sin_turns(a + 0.25f)) * k), (int32_t)((y + (r - 0.6f) * fm_sin_turns(a)) * k),
+                    KP_LAMP + 5);
+        }
+    r8_disc(s, x * k, y * k, (yuki ? 1.5f : 2.0f) * k, (uint8_t)(KP_STONE + 3));   /* the jewel on top (hoju) */
+    r8_disc(s, (x - 0.5f) * k, (y - 0.6f) * k, (yuki ? 0.7f : 1.0f) * k, (uint8_t)(KP_STONE + 1));
 }
 
 /* the moon on the water at night (a Night mood): a pale disc, its rows wavering and broken by the
@@ -699,7 +736,7 @@ static void kp_palette(void)
         r8_pal_set(c + KF_DARK, KP_SPECIES[sp].dark);
         r8_pal_set(c + KF_THROAT, KP_SPECIES[sp].throat);
         r8_pal_set(c + KF_PUPIL, 0x0C0C08u);
-        r8_pal_set(c + KF_LINE, 0x1A2412u);           /* (its outline: dark against the pad) */
+        r8_pal_set(c + KF_LINE, r8_mix(KP_SPECIES[sp].body, 0xFFFFF0u, 0.35f));   /* (its wet back's shine) */
         r8_pal_set(c + KF_STRIPE, KP_SPECIES[sp].stripe);
         r8_pal_set(c + KF_IRIS, KP_SPECIES[sp].iris);
         r8_pal_set(c + KF_SPOT, KP_SPECIES[sp].spot);
@@ -738,6 +775,20 @@ static void kp_palette(void)
                     r8_pal_set(KP_NITE + i, r8_mix(from[i], TO[i], f[i]));
                     r8_pal_commit_range(KP_NITE + i, 1, r8_mix(m, 0xFFFFFFu, f[i]), 0xFFA066u,
                                         (int)(60.0f * glow * glow * (1.0f - f[i])));
+                }
+                {   /* the lanterns' light, its own steps: warm on the moss (three), on the water (two), on a roof's
+                     * rim; the flame, breathing */
+                    static const uint8_t FROM[7] = {KP_GROUND + 2, KP_GROUND + 2, KP_GROUND + 2, KP_DEEP + 8, KP_DEEP + 8,
+                                                    KP_STONE + 5, KP_STONE + 6};
+                    static const uint32_t LT[7] = {0x6E5A30u, 0x9A7A40u, 0xC89A58u, 0xA87A48u, 0xF0B868u, 0xD8A468u,
+                                                   0xFFF0C0u};
+                    static const uint8_t AMT[7] = {60, 75, 85, 70, 92, 70, 100};
+                    for (i = 0; i < 7; i++) {
+                        float a = nt * (float)AMT[i] * 0.01f;
+                        r8_pal_set(KP_LAMP + i, r8_mix(r8_base[FROM[i]], LT[i], a));
+                        r8_pal_commit_range(KP_LAMP + i, 1, r8_mix(m, 0xFFFFFFu, a), 0xFFA066u,
+                                            (int)(60.0f * glow * glow * (1.0f - a)));
+                    }
                 }
             }
         }
@@ -984,6 +1035,7 @@ SC_SMALL static void kp_background(void)
                 kp_pad[kp.npad].flower = (sc_rnd() % 3u) == 0u ? 1 + (int)(sc_rnd() % 2u) : 0;
                 kp_pad[kp.npad].shade = (uint8_t)(sc_rnd() % 3u);
                 kp_pad[kp.npad].curl = (uint8_t)(sc_rnd() & 255u);
+                kp_pad[kp.npad].dip = 0.0f;
                 kp.npad++;
             }
         }
@@ -1196,90 +1248,130 @@ static void kp_draw_koi(surf_t *s, float k, koi_t *q, int shadow)
 }
 
 /* a lily pad's bob: what 0 its size, 1 x, 2 y; a little all the while, more in a breeze near it */
-static float kp_pad_bob(int i, int what)
+SC_SMALL static float kp_pad_bob(int i, int what)
 {
     float bx = kp.br_t > 0.0f ? kp_pad[i].x - kp.br_x : 999.0f, by = kp.br_t > 0.0f ? kp_pad[i].y - kp.br_y : 999.0f,
           near = bx * bx + by * by < 2500.0f ? fm_sin_turns(0.5f * kp.br_t / kp.br_dur) : 0.0f;
+    float dip = kp_pad[i].dip * fm_sin_turns(kp.t * 1.6f);   /* (a frog's weight: it rocks, settling) */
     if (what == 0)
-        return 1.0f + 0.03f * fm_sin_turns(kp.t * 0.21f + (float)i * 0.31f);
+        return 1.0f + 0.03f * fm_sin_turns(kp.t * 0.21f + (float)i * 0.31f) - 0.04f * kp_pad[i].dip;
     if (what == 1)
-        return 0.5f * fm_sin_turns(kp.t * 0.13f + (float)i * 0.47f) + 1.6f * near * fm_sin_turns(kp.t * 0.6f + (float)i);
-    return 0.4f * fm_sin_turns(kp.t * 0.17f + (float)i * 0.29f) + 0.8f * near * fm_sin_turns(kp.t * 0.5f + (float)i);
+        return 0.5f * fm_sin_turns(kp.t * 0.13f + (float)i * 0.47f) + 1.6f * near * fm_sin_turns(kp.t * 0.6f + (float)i) + 0.8f * dip;
+    return 0.4f * fm_sin_turns(kp.t * 0.17f + (float)i * 0.29f) + 0.8f * near * fm_sin_turns(kp.t * 0.5f + (float)i) + 0.6f * dip;
 }
 
-/* a frog, seen from above: on a pad (sitting, its throat puffing as it croaks) or in the air (stretched, legs out).
- * (bigger, outlined, its species' colors and markings, bright eyes) */
+/* a frog's shadow: on the water (darker water) or on a pad (the pad's own shade); nothing else */
+static void kp_frog_shadow(surf_t *s, float cx, float cy, float r)
+{
+    int32_t x, y;
+    for (y = (int32_t)(cy - r); y <= (int32_t)(cy + r); y++)
+        for (x = (int32_t)(cx - r); x <= (int32_t)(cx + r); x++) {
+            float dx = (float)x + 0.5f - cx, dy = (float)y + 0.5f - cy;
+            uint8_t *p;
+            if (x < 0 || y < 0 || x >= s->w || y >= s->h || dx * dx + dy * dy > r * r)
+                continue;
+            p = s->px + y * s->w + x;
+            if (*p < KP_DEEP + 32 || (*p >= KP_REFL && *p < KP_REFL + 32))
+                *p = KP_DEEP + 1;
+            else if (*p >= KP_LILY && *p < KP_LILY + 8)
+                *p = KP_LILY + 7;
+        }
+}
+
+/* a frog, seen from above, facing any way: on a pad (sitting, hind legs folded, its throat moving as it breathes
+ * and puffing as it croaks, blinking now and then) or in the air (stretched, hind legs out behind, its shadow on the
+ * water below). Shaded by its own colors, lit from the upper left (no outline): a darker green on its shadow side,
+ * a wet shine on its back; raised eyes with a glint */
 static void kp_frogs_draw(surf_t *s, float k)
 {
     int i, j;
     for (i = 0; i < KP_NFROG; i++) {
-        int sp = kp_fg[i].sp;
+        int sp = kp_fg[i].sp, air = kp_fg[i].st == 1 || kp_fg[i].st == 3;
         uint8_t c = (uint8_t)KP_FROGC(i);
-        float x = kp_fg[i].x, y = kp_fg[i].y, f = (float)kp_fg[i].face, S = 1.5f * KP_SPECIES[sp].size, sc = 1.0f;
+        float x = kp_fg[i].x, y = kp_fg[i].y, fx = kp_fg[i].fx, fy = kp_fg[i].fy, S = 1.8f * KP_SPECIES[sp].size, lift = 0.0f,
+              br = air ? 0.0f : 0.12f * fm_sin_turns(kp.t * 1.4f + (float)i);   /* (its flank, breathing) */
         uint32_t m = kp_fg[i].mark;
         if (!kp_fg[i].st)
             continue;
-        if (kp_fg[i].st == 1 || kp_fg[i].st == 3) {   /* leaping: bigger at the top of the arc, legs out behind */
+#define FP(a, b) (x + (a) * fx - (b) * fy) * k, (y + (a) * fy + (b) * fx) * k   /* along its body, across it */
+        if (air) {                                    /* leaping: bigger at the top of the arc */
             float u = fm_minf(1.0f, kp_fg[i].t / 0.6f);
-            sc = S * (1.0f + 0.35f * fm_sin_turns(u * 0.5f));
-            for (j = -1; j <= 1; j += 2)
-                r8_limb(s, (x - f * 1.5f * sc) * k, (y + (float)j * 1.4f * sc) * k, 1.4f * sc * k, (x - f * 6.0f * sc) * k,
-                        (y + (float)j * 2.2f * sc) * k, 0.8f * sc * k, (uint8_t)(c + KF_DARK));
-            r8_disc(s, x * k, y * k, 2.9f * sc * k, (uint8_t)(c + KF_LINE));
-            r8_disc(s, (x + f * 2.3f * sc) * k, y * k, 2.2f * sc * k, (uint8_t)(c + KF_LINE));
-            r8_disc(s, x * k, y * k, 2.3f * sc * k, (uint8_t)(c + KF_BODY));
-            r8_disc(s, (x + f * 2.3f * sc) * k, y * k, 1.7f * sc * k, (uint8_t)(c + KF_BODY));
-            continue;
-        }
-        r8_disc(s, (x + 0.8f) * k, (y + 1.2f) * k, 3.4f * S * k, KP_LILY + 7);   /* its shadow on the pad */
-        for (j = -1; j <= 1; j += 2) {                /* its legs: the hind ones folded at its sides, the front ones */
-            float sj = (float)j;
-            r8_tri(s, (x - f * 0.4f * S) * k, (y + sj * 2.2f * S) * k, (x - f * 3.8f * S) * k, (y + sj * 3.5f * S) * k,
-                   (x + f * 0.9f * S) * k, (y + sj * 3.7f * S) * k, (uint8_t)(c + KF_LINE));
-            r8_tri(s, (x - f * 0.2f * S) * k, (y + sj * 2.4f * S) * k, (x - f * 3.2f * S) * k, (y + sj * 3.2f * S) * k,
-                   (x + f * 0.5f * S) * k, (y + sj * 3.3f * S) * k, (uint8_t)(c + KF_DARK));
-            r8_limb(s, (x + f * 2.0f * S) * k, (y + sj * 1.4f * S) * k, 1.0f * S * k, (x + f * 3.4f * S) * k,
-                    (y + sj * 2.8f * S) * k, 0.7f * S * k, (uint8_t)(c + KF_DARK));
-        }
-        if (kp_fg[i].puff > 0.05f) {                  /* its throat, puffing as it croaks: a pond frog's two sacs at
-                                                       * the corners of its mouth, a tree frog's or a bullfrog's one */
-            float r = (0.6f + 1.2f * kp_fg[i].puff) * S;
-            if (KP_SPECIES[sp].stripes)
-                for (j = -1; j <= 1; j += 2)
-                    r8_disc(s, (x + f * 2.2f * S) * k, (y + (float)j * 1.9f * S) * k, r * k, (uint8_t)(c + KF_THROAT));
-            else
-                r8_disc(s, (x + f * 3.6f * S) * k, y * k, r * 1.3f * k, (uint8_t)(c + KF_THROAT));
-        }
-        r8_disc(s, (x - f * 0.5f * S) * k, y * k, 3.0f * S * k, (uint8_t)(c + KF_LINE));   /* outlined */
-        r8_disc(s, (x + f * 2.2f * S) * k, y * k, 2.3f * S * k, (uint8_t)(c + KF_LINE));
-        r8_disc(s, (x - f * 0.5f * S) * k, y * k, 2.4f * S * k, (uint8_t)(c + KF_BODY));
-        r8_disc(s, (x + f * 2.2f * S) * k, y * k, 1.8f * S * k, (uint8_t)(c + KF_BODY));
-        r8_disc(s, (x + f * 3.2f * S) * k, (y + 0.3f * S) * k, 0.8f * S * k, (uint8_t)(c + KF_THROAT));   /* its pale lip */
-        r8_disc(s, (x + f * 2.6f * S) * k, y * k, 1.3f * S * k, (uint8_t)(c + KF_BODY));
-        if (KP_SPECIES[sp].stripes)                   /* a pale line down its back */
-            r8_limb(s, (x - f * 2.6f * S) * k, y * k, 0.7f * S * k, (x + f * 3.4f * S) * k, y * k, 0.5f * S * k,
-                    (uint8_t)(c + KF_STRIPE));
-        if (KP_SPECIES[sp].spots) {                   /* its spots, its own (or a wrinkled frog's many warts) */
-            int n = KP_SPECIES[sp].spots == 2 ? 9 : 5;
-            float rs = KP_SPECIES[sp].spots == 2 ? 0.45f : 0.75f;
-            for (j = 0; j < n; j++) {
-                float a = (float)(m & 255u) * (1.0f / 256.0f), d = 0.35f + 0.6f * (float)((m >> 8) & 15u) * (1.0f / 16.0f),
-                      sx = x - f * 0.5f * S + 2.0f * S * d * fm_sin_turns(a + 0.25f), sy = y + 2.0f * S * d * fm_sin_turns(a);
-                m = m * 1664525u + 1013904223u;
-                if (KP_SPECIES[sp].stripes && fm_fabsf(sy - y) < 0.6f * S)
-                    continue;                         /* (clear of the line) */
-                r8_disc(s, sx * k, sy * k, rs * S * k, (uint8_t)(c + KF_SPOT));
+            lift = fm_sin_turns(u * 0.5f);
+            kp_frog_shadow(s, (x + 1.0f + 3.0f * lift) * k, (y + 6.0f * lift + 1.5f + 3.0f * lift) * k,
+                           2.4f * S * (1.0f - 0.25f * lift) * k);
+            S *= 1.0f + 0.25f * lift;
+            for (j = -1; j <= 1; j += 2) {            /* the hind legs stretched out behind, the front ones forward */
+                float b = (float)j;
+                r8_limb(s, FP(-4.2f * S, b * 1.9f * S), 0.6f * S * k, FP(-6.6f * S, b * 1.6f * S), 0.5f * S * k,
+                        (uint8_t)(c + KF_DARK));
+                r8_limb(s, FP(-1.4f * S, b * 1.3f * S), 1.0f * S * k, FP(-4.2f * S, b * 1.9f * S), 0.7f * S * k,
+                        (uint8_t)(c + KF_BODY));
+                r8_limb(s, FP(1.8f * S, b * 1.2f * S), 0.5f * S * k, FP(3.6f * S, b * 1.8f * S), 0.4f * S * k,
+                        (uint8_t)(c + KF_BODY));
+            }
+        } else {
+            kp_frog_shadow(s, (x - fx * 0.5f * S + 1.3f) * k, (y - fy * 0.5f * S + 1.5f) * k, 2.7f * S * k);
+            for (j = -1; j <= 1; j += 2) {            /* the hind legs folded at its sides (thigh, then the foot back
+                                                       * along it), the front ones */
+                float b = (float)j;
+                r8_limb(s, FP(0.4f * S, b * 2.9f * S), 0.55f * S * k, FP(-2.9f * S, b * 3.4f * S), 0.45f * S * k,
+                        (uint8_t)(c + KF_DARK));      /* (the foot, under the thigh) */
+                r8_limb(s, FP(-1.6f * S, b * 1.5f * S), 0.9f * S * k, FP(0.4f * S, b * 2.9f * S), 0.65f * S * k,
+                        (uint8_t)(c + KF_BODY));
+                r8_limb(s, FP(1.9f * S, b * 1.3f * S), 0.55f * S * k, FP(3.3f * S, b * 2.4f * S), 0.45f * S * k,
+                        (uint8_t)(c + KF_BODY));
             }
         }
-        for (j = -1; j <= 1; j += 2) {                /* its eyes, bright, on top of its head */
-            float ex = x + f * 2.5f * S, ey = y + (float)j * 1.35f * S;
+        r8_disc(s, (x - fx * 0.5f * S + (0.4f + br) * S) * k, (y - fy * 0.5f * S + (0.5f + br) * S) * k, 2.4f * S * k,
+                (uint8_t)(c + KF_DARK));              /* its shadow side, then its back */
+        r8_disc(s, FP(-0.5f * S, 0.0f), 2.4f * S * k, (uint8_t)(c + KF_BODY));
+        r8_disc(s, (x + fx * 2.2f * S + 0.3f * S) * k, (y + fy * 2.2f * S + 0.35f * S) * k, 1.8f * S * k,
+                (uint8_t)(c + KF_DARK));
+        r8_disc(s, FP(2.2f * S, 0.0f), 1.8f * S * k, (uint8_t)(c + KF_BODY));
+        r8_disc(s, FP(3.3f * S, 0.0f), 0.5f * S * k, (uint8_t)(c + KF_THROAT));   /* its pale lip */
+        r8_disc(s, FP(2.5f * S, 0.0f), 1.3f * S * k, (uint8_t)(c + KF_BODY));
+        if (KP_SPECIES[sp].stripes)                   /* a pale line down its back */
+            r8_limb(s, FP(-2.6f * S, 0.0f), 0.7f * S * k, FP(3.4f * S, 0.0f), 0.5f * S * k, (uint8_t)(c + KF_STRIPE));
+        if (KP_SPECIES[sp].spots) {                   /* its spots, its own (or a wrinkled frog's many warts) */
+            int n = KP_SPECIES[sp].spots == 2 ? 9 : 5;
+            float rs = KP_SPECIES[sp].spots == 2 ? 0.4f : 0.55f;
+            for (j = 0; j < n; j++) {
+                float a = (float)(m & 255u) * (1.0f / 256.0f), d = 0.35f + 0.6f * (float)((m >> 8) & 15u) * (1.0f / 16.0f),
+                      sa = -0.5f * S + 2.0f * S * d * fm_sin_turns(a + 0.25f), sb = 2.0f * S * d * fm_sin_turns(a);
+                m = m * 1664525u + 1013904223u;
+                if (KP_SPECIES[sp].stripes && fm_fabsf(sb) < 0.6f * S)
+                    continue;                         /* (clear of the line) */
+                r8_disc(s, FP(sa, sb), rs * S * k, (uint8_t)(c + KF_SPOT));
+            }
+        }
+        r8_disc(s, (x - fx * 0.8f * S - 0.7f * S) * k, (y - fy * 0.8f * S - 0.8f * S) * k, 0.6f * S * k,
+                (uint8_t)(c + KF_LINE));              /* the light on its wet back */
+        if (!air && kp_fg[i].puff > 0.05f) {          /* its throat, puffing as it croaks: a pond frog's two sacs at
+                                                       * the corners of its mouth, a tree frog's or a bullfrog's one */
+            float r = (0.5f + 1.2f * kp_fg[i].puff) * S;
+            if (KP_SPECIES[sp].stripes)
+                for (j = -1; j <= 1; j += 2)
+                    r8_disc(s, FP(2.2f * S, (float)j * 1.9f * S), r * k, (uint8_t)(c + KF_THROAT));
+            else
+                r8_disc(s, FP(3.6f * S, 0.0f), r * 1.2f * k, (uint8_t)(c + KF_THROAT));
+        }
+        for (j = -1; j <= 1; j += 2) {                /* its eyes, raised on top of its head: a glint in each, shut
+                                                       * for a moment when it blinks */
+            float ea = 2.5f * S, eb = (float)j * 1.35f * S, ex = x + ea * fx - eb * fy, ey = y + ea * fy + eb * fx;
             if (KP_SPECIES[sp].eyeline)               /* a tree frog's dark line from its nose through its eye */
-                r8_limb(s, (x + f * 4.0f * S) * k, (y + (float)j * 0.9f * S) * k, 0.5f * S * k, (x + f * 0.8f * S) * k,
-                        (y + (float)j * 1.9f * S) * k, 0.6f * S * k, (uint8_t)(c + KF_SPOT));
-            r8_disc(s, ex * k, ey * k, 1.0f * S * k, (uint8_t)(c + KF_LINE));
+                r8_limb(s, FP(4.0f * S, (float)j * 0.9f * S), 0.5f * S * k, FP(0.8f * S, (float)j * 1.9f * S), 0.6f * S * k,
+                        (uint8_t)(c + KF_SPOT));
+            r8_disc(s, (ex + 0.25f * S) * k, (ey + 0.3f * S) * k, 0.95f * S * k, (uint8_t)(c + KF_DARK));
+            if (!air && kp_fg[i].blink < 0.15f) {
+                r8_disc(s, ex * k, ey * k, 0.8f * S * k, (uint8_t)(c + KF_BODY));   /* (its lid) */
+                continue;
+            }
             r8_disc(s, ex * k, ey * k, 0.75f * S * k, (uint8_t)(c + KF_IRIS));
             r8_pset(s, (int32_t)(ex * k), (int32_t)(ey * k), (uint8_t)(c + KF_PUPIL));
+            if (S * k > 1.6f)
+                r8_pset(s, (int32_t)((ex - 0.45f * S) * k), (int32_t)((ey - 0.45f * S) * k), (uint8_t)(c + KF_THROAT));
         }
+#undef FP
     }
 }
 
@@ -1466,6 +1558,8 @@ static void kp_draw(void)
         }
     }
     kp_frogs_draw(s, k);                             /* frogs on the pads, or leaping */
+    kp_toro_draw(s, k, KP_TORO_X, KP_TORO_Y, 0);     /* the lanterns (under the maple's branch) */
+    kp_toro_draw(s, k, KP_YUKI_X, KP_YUKI_Y, 1);
     for (i = 0; i < kp_nbl; i++)                      /* the maple's branch over the pond, its leaves */
         r8_limb(s, kp_bl[i].x0 * k, kp_bl[i].y0 * k, kp_bl[i].w * k, kp_bl[i].x1 * k, kp_bl[i].y1 * k, kp_bl[i].w * 0.5f * k,
                 (uint8_t)(KP_TREE + (i ? 1 : 0)));
@@ -1533,7 +1627,8 @@ static void kp_draw(void)
     kp_sky_draw(s, k);                               /* the sky on the water, a breeze's ripples */
     kp_glints_draw(s, k);                            /* (Feeding's sparkle; the lantern, lit at night) */
     kp_moon_draw(s, k);
-    kp_toro_draw(s, k);
+    kp_toro_light(s, k, KP_TORO_X, KP_TORO_Y, 0);    /* (their light last: on the moss, the stones, the water) */
+    kp_toro_light(s, k, KP_YUKI_X, KP_YUKI_Y, 1);
     SC_PT(4);
 }
 
@@ -1789,6 +1884,22 @@ static float kp_knock_period(void)
     return 35.0f * fm_exp2f((100.0f - k) * 0.02f * 1.36f) * (0.67f + 0.66f * sc_frand());
 }
 
+/* the small life's own randomness (a frog's blink and turns, the lanterns' breathing): apart from the scene's, so
+ * the rest happens as it did */
+static uint32_t kp_lr = 0x9E3779B9u;
+static float kp_lrand(void)
+{
+    kp_lr = kp_lr * 1664525u + 1013904223u;
+    return (float)(kp_lr >> 8) * (1.0f / 16777216.0f);
+}
+
+/* open water, clear of the rim's stones (the biggest reach ~11 over it): where a frog may jump from or dive in */
+static int kp_open(float x, float y)
+{
+    float dx = x - KP_CX, dy = y - KP_CY, r = kp_rim_at(x, y) - 13.0f;
+    return dx * dx + dy * dy < r * r;
+}
+
 /* the pond's life: frogs hopping onto the lily pads, croaking, plopping back in (the koi turn to look); the
  * sky's reflections drifting across; now and then a breeze's patch of ripples */
 static void kp_life_step(float dt)
@@ -1847,16 +1958,32 @@ static void kp_life_step(float dt)
         kp.br_next = 40.0f + 50.0f * sc_frand();
         kp.breezes++;
     }
+    for (i = 0; i < kp.npad; i++)
+        kp_pad[i].dip *= fm_maxf(0.0f, 1.0f - dt * 1.2f);
+    for (i = 0; i < 2; i++) {                         /* each lantern's flame: a new strength now and then, eased to */
+        if ((kp.lamp_next[i] -= dt) <= 0.0f) {
+            kp.lamp_to[i] = kp_lrand();
+            kp.lamp_next[i] = 0.8f + 2.6f * kp_lrand();
+        }
+        kp.lamp[i] += (kp.lamp_to[i] - kp.lamp[i]) * fm_minf(1.0f, dt * 0.9f);
+    }
     if ((kp.frog_next -= dt) <= 0.0f) {               /* a frog hops onto a free pad */
         for (i = 0; i < KP_NFROG && kp_fg[i].st; i++)
             ;
         if (i < KP_NFROG && kp.npad > 0) {
             int pad = (int)(sc_rnd() % (uint32_t)kp.npad), used = 0;
+            if (kp_pad[pad].flower)                   /* (a pad, not its flower, if it can) */
+                pad = (pad + 1) % kp.npad;
             for (j = 0; j < KP_NFROG; j++)
                 if (kp_fg[j].st && kp_fg[j].pad == pad)
                     used = 1;
+            float an = sc_frand();
+            for (j = 0; j < 8 && !kp_open(kp_pad[pad].x + 22.0f * fm_sin_turns(an + 0.25f),
+                                          kp_pad[pad].y + 22.0f * fm_sin_turns(an)); j++)
+                an = sc_frand();                      /* (up out of the water, never off the stones) */
+            if (j == 8)
+                used = 1;
             if (!used) {
-                float an = sc_frand();
                 uint32_t w = sc_rnd() % 100u, acc = 0;
                 for (j = 0; j < KP_NSPECIES - 1; j++) {   /* which frog: by how common */
                     acc += KP_SPECIES[j].weight;
@@ -1870,7 +1997,10 @@ static void kp_life_step(float dt)
                 kp_fg[i].pad = pad;
                 kp_fg[i].x0 = kp_pad[pad].x + 22.0f * fm_sin_turns(an + 0.25f);
                 kp_fg[i].y0 = kp_pad[pad].y + 22.0f * fm_sin_turns(an);
-                kp_fg[i].face = kp_fg[i].x0 < kp_pad[pad].x ? 1 : -1;
+                kp_fg[i].fx = -fm_sin_turns(an + 0.25f);   /* (facing the pad, as it jumps) */
+                kp_fg[i].fy = -fm_sin_turns(an);
+                kp_fg[i].rot = 0.0f;
+                kp_fg[i].blink = 2.0f;
                 kp_ripple(kp_fg[i].x0, kp_fg[i].y0);
                 kp.frogs++;
             }
@@ -1891,12 +2021,21 @@ static void kp_life_step(float dt)
             if (u >= 1.0f) {
                 if (kp_fg[i].st == 1) {
                     kp_fg[i].st = 2;
+                    kp_pad[kp_fg[i].pad].dip = 1.0f;
                     kp_fg[i].sit = 12.0f + 18.0f * sc_frand();
                     kp_fg[i].croak = 2.0f + 3.0f * sc_frand();
                 } else {                              /* in: a plop, rings, and the koi near turn to look */
                     kp_fg[i].st = 0;
                     kp_ripple(kp_fg[i].x, kp_fg[i].y);
                     kp_ripple(kp_fg[i].x + 0.5f, kp_fg[i].y);
+                    for (j = 0; j < KP_NRAIN; j++)    /* (its splash: a drop's, no sound of its own) */
+                        if (kp_rd[j].t <= 0.0f) {
+                            kp_rd[j].pad = 1;
+                            kp_rd[j].x = kp_fg[i].x;
+                            kp_rd[j].y = kp_fg[i].y;
+                            kp_rd[j].t = 0.9f;
+                            break;
+                        }
                     fm_voice(FM_VOICE_ID + 46, 3, -700.0f + 200.0f * sc_frand(), 70, cd_pan(kp_fg[i].x / 240.0f), 140);
                     kp.plops++;
                     for (j = 0; j < KP_MAXK; j++) {
@@ -1915,6 +2054,16 @@ static void kp_life_step(float dt)
             kp_fg[i].x = kp_pad[kp_fg[i].pad].x + kp_pad_bob(kp_fg[i].pad, 1);
             kp_fg[i].y = kp_pad[kp_fg[i].pad].y + kp_pad_bob(kp_fg[i].pad, 2);
             kp_fg[i].puff *= fm_maxf(0.0f, 1.0f - dt * 2.5f);
+            if ((kp_fg[i].blink -= dt) < 0.0f)
+                kp_fg[i].blink = 3.0f + 5.0f * kp_lrand();
+            if (kp_fg[i].rot != 0.0f) {               /* turning a little, slowly */
+                float d = fm_clampf(kp_fg[i].rot, -0.12f * dt, 0.12f * dt), ca = fm_sin_turns(d + 0.25f), sa = fm_sin_turns(d),
+                      nx = kp_fg[i].fx * ca - kp_fg[i].fy * sa;
+                kp_fg[i].fy = kp_fg[i].fx * sa + kp_fg[i].fy * ca;
+                kp_fg[i].fx = nx;
+                kp_fg[i].rot -= d;
+            } else if (kp_lrand() < dt * 0.15f)
+                kp_fg[i].rot = (kp_lrand() - 0.5f) * 0.25f;
             if ((kp_fg[i].croak -= dt) <= 0.0f) {
                 fm_shot(1 + i, FM_SHOT_FROG, (int)(sc_rnd() % (uint32_t)fm_shot_count(FM_SHOT_FROG)), 46 + (int)(sc_rnd() % 10u),
                         cd_pan(kp_fg[i].x / 240.0f),
@@ -1922,15 +2071,29 @@ static void kp_life_step(float dt)
                 kp_fg[i].puff = 1.0f;
                 kp_fg[i].croak = 4.0f + 6.0f * sc_frand();
             }
-            if ((kp_fg[i].sit -= dt) <= 0.0f) {       /* off again, into the water */
-                float an = sc_frand();
-                kp_fg[i].st = 3;
+            if ((kp_fg[i].sit -= dt) <= 0.0f &&       /* off again, into the water (turned toward open water first:
+                                                       * never onto the stones) */
+                !kp_open(kp_fg[i].x + 24.0f * kp_fg[i].fx, kp_fg[i].y + 24.0f * kp_fg[i].fy)) {
+                for (j = 0; j < 12; j++) {
+                    float an = kp_lrand(), ex = kp_fg[i].x + 24.0f * fm_sin_turns(an + 0.25f), ey = kp_fg[i].y + 24.0f * fm_sin_turns(an);
+                    if (kp_open(ex, ey)) {
+                        float d = an - kp_atan2(kp_fg[i].fy, kp_fg[i].fx);
+                        d -= fm_floorf(d + 0.5f);
+                        kp_fg[i].rot = d;
+                        kp_fg[i].sit = fm_fabsf(d) / 0.12f + 0.4f;
+                        break;
+                    }
+                }
+                if (j == 12)
+                    kp_fg[i].sit = 2.0f;              /* (no way clear yet: it sits a while longer) */
+            } else if (kp_fg[i].sit <= 0.0f) {
+                kp_fg[i].st = 3;                      /* (the way it faces) */
                 kp_fg[i].t = 0.0f;
                 kp_fg[i].x0 = kp_fg[i].x;
                 kp_fg[i].y0 = kp_fg[i].y;
-                kp_fg[i].x1 = kp_fg[i].x + 24.0f * fm_sin_turns(an + 0.25f);
-                kp_fg[i].y1 = kp_fg[i].y + 24.0f * fm_sin_turns(an);
-                kp_fg[i].face = kp_fg[i].x1 > kp_fg[i].x ? 1 : -1;
+                kp_fg[i].x1 = kp_fg[i].x + 24.0f * kp_fg[i].fx;
+                kp_fg[i].y1 = kp_fg[i].y + 24.0f * kp_fg[i].fy;
+                kp_pad[kp_fg[i].pad].dip = 0.6f;
             }
             break;
         default: break;

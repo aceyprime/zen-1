@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 /* Hotaru 蛍: fireflies over a summer field at night, a slow stream across it. Reeds and grass sway in silhouette, a
- * moon (its size and phase the picture's own) crosses the sky, now and then a shooting star, and the night goes from
- * dusk blue to deep night and back every twelve minutes (more fireflies at dusk, fewer in the deep of the night).
+ * moon (its size and phase the picture's own) crosses the sky, now and then a shooting star, and in Natural the night
+ * goes from dusk blue through deep night to dawn every half hour (the most fireflies early, fewer toward dawn).
  * Each firefly blinks on its own clock and nudges the others toward its timing (coupled oscillators, Kuramoto's
  * model): over minutes the field falls into one gentle pulse, holds it, and drifts apart again as the coupling ebbs
  * (the Sync knob: how strong it can get). The fireflies keep drifting all the while, and glow softly between blinks;
@@ -43,9 +43,12 @@
                                                  * scene with GLO on the FM-1 (100 in 110 from the
                                                  * calibration photo) */
 enum { HT_SKY = 0, HT_STAR = 64, HT_HALO = 68, HT_MOON = 72, HT_HILL = 76, HT_GROUND = 80, HT_REED = 88, HT_GLOW = 96,
-       HT_WATER = 104, HT_SHINE = 112, HT_SHOOT = 116, HT_FORE = 120, HT_CLOUD = 124, HT_STW = 128, HT_STB = 134,
-       HT_STY = 136, HT_RAIN = 138, HT_FOG = 140, HT_MW = 142, HT_TREE = 144, HT_STONE = 148, HT_RIM = 152,
-       HT_HOUSE = 154 };   /* (the far woods and the branch over us; the stream's stones; moonlight on the ridge; a
+       HT_WATER = 104, HT_SHINE = 112, HT_SHOOT = 116, HT_FORE = 120, HT_STW = 128, HT_STB = 134,
+       HT_STY = 136, HT_RAIN = 138, HT_FOGW = 140, HT_MW = 142, HT_TREE = 144, HT_STONE = 148, HT_RIM = 152,
+       HT_HOUSE = 154, HT_FOGG = 156, HT_CLR = 160, HT_MVEIL = 232, HT_FOGL = 244 };   /* (each cloud's own shades: 18 a cloud, HT_CLR_N; the moon
+                                                       * behind cloud: its three shades, four steps each) */
+#define HT_CLR_N 18                             /* a cloud's shades: six by the sky's own color, six half lit by the
+                                                 * moon, six lit (its silver edge) */   /* (the far woods and the branch over us; the stream's stones; moonlight on the ridge; a
                             * farmhouse window and its glow) */   /* (rain, light and dim; the mist's fog, two) */   /* (the sky 64 steps: the stars, six whites faint .. bright, a blue-white and a
                           * warm star with their halos) */
 #define HT_KEY_ST 0.44f                    /* a white key's note: as loud as the fireflies' own (their blinks, measured on
@@ -148,8 +151,7 @@ static struct {
     float t, night, depth, gust, gust_to, gust_dir, wave_ph, wave_per, wave, r_sync, r_avg, tokens, spawn_acc;
     float r_min;                                /* the lowest 20 s average after the first minute (the host's tests) */
     float frog_next, owl_next, pulse_left;
-    float moon_r, moon_light, moon_off, moon_side;   /* the moon's radius, how much is lit (0.3..1), its terminator (c),
-                                                      * which side is lit (1 right, -1 left) */
+    sc_moon_t mn;                               /* the moon: its size and phase (scene.h) */
     float wt_ph, wb_ph;                         /* the stream's banks' waves */
     struct {
         float x, y, vx, vy, t;                  /* a shooting star: its head, velocity, age (s); t < 0: none */
@@ -168,7 +170,7 @@ static struct {
     float deep;                                 /* the Deep Night mood (0..1, eased): the darkest sky, more stars, the
                                                  * Milky Way */
     sc_glide_t glide;                           /* the way to a mood's night */
-    float moon_vis;                             /* how much of the moon's disc is seen this frame, 0..1 (behind
+    float mn_vis;                             /* how much of the moon's disc is seen this frame, 0..1 (behind
                                                  * the hills or below them, none: no light on the stream) */
     float rain_dt;                              /* the rain's time since its drops last moved; which frame */
     float drops;                                /* how much rain is falling (eased; sc_rain_step) */
@@ -181,6 +183,9 @@ static struct {
     float nat_light, nat_off, nat_side;         /* the night's own moon (a mood may show another) */
     uint32_t pings, weathers;
     int wx_fast;                                /* the weather changed by hand: it comes quickly */
+    float hx;                                   /* the farmhouse window's place along the horizon */
+    uint8_t moons;                              /* the nights since the picture's own (each its own moon) */
+    uint8_t mn_made;                            /* the picture's moon picked (drawing it again keeps tonight's) */
     struct {
         float t;
         int reed;
@@ -260,7 +265,7 @@ static void ht_pulse_play(void)
     ht.tokens -= 1.0f;
     ht.pulses++;
     for (i = 0; i < n; i++) {
-        float ml = ht.moon_light, st = ((n > 1 ? 0.32f : 0.42f) + 0.18f * sc_frand()) * (0.6f + 0.6f * ml);   /* (more strongly) */   /* (the
+        float ml = ht.mn.light, st = ((n > 1 ? 0.32f : 0.42f) + 0.18f * sc_frand()) * (0.6f + 0.6f * ml);   /* (more strongly) */   /* (the
                                                        * moon: brighter full, darker as a crescent) */
         if (sc_frand() < 0.45f * (ml - 0.3f) / 0.7f && keys[i] + 5 < FM_NWHITE)
             keys[i] += 5;                             /* (a full moon: now and then an octave up) */
@@ -426,9 +431,13 @@ static void ht_scatter(float dir)
 }
 
 /* --------------------------------------------------------------- picture --- */
+static float ht_moon_y(void);
+/* Natural goes round from dawn straight to dusk: a moon still up at dawn pales into the light over its last minute,
+ * one already up at dusk comes out of it over the first; so it is never cut off, nor its phase changed, in sight */
+static float ht_moon_tw(void) { return fm_clampf(fm_minf(ht.night, 1.0f - ht.night) * 30.0f, 0.0f, 1.0f); }
 static void ht_palette(void)
 {
-    float d = ht.depth, ml = ht.moon_light;
+    float d = ht.depth, ml = ht.mn.light;
     int i;
     {   /* the sky: dusk blue with a last warmth low down, to deep night */
         uint32_t top = ht_mix(ht_mix(0x23305Eu, 0x06080Fu, d), 0x020306u, 0.6f * ht.deep),   /* (Deep Night: darkest) */
@@ -459,6 +468,14 @@ static void ht_palette(void)
     r8_pal_set(HT_MOON + 1, 0xDDD7C0u);
     r8_pal_set(HT_MOON + 2, 0xD6D0BAu);              /* (the seas: a soft gray, close to the highlands) */
     r8_pal_set(HT_MOON + 3, ht_mix(ht_mix(0x4A5C92u, 0x0B1226u, d), 0x8A96B4u, 0.22f));
+    if (ht_moon_tw() < 1.0f) {                        /* (paling into the twilight: the sky where it is) */
+        int si = (int)(ht_moon_y() * (63.0f / (HT_HORIZON + 10.0f)));
+        uint32_t sk = r8_base[HT_SKY + (si < 0 ? 0 : si > 63 ? 63 : si)];
+        for (i = 0; i < 4; i++) {
+            r8_base[HT_MOON + i] = ht_mix(sk, r8_base[HT_MOON + i], ht_moon_tw());
+            r8_base[HT_HALO + i] = ht_mix(sk, r8_base[HT_HALO + i], ht_moon_tw());
+        }
+    }
     /* far to near, lighter to darker: the hills, the field with a haze at the horizon, the stream, the foreground;
      * a little moonlight on them all with a fuller moon */
     r8_pal_ramp(HT_HILL, 4, ht_mix(0x2A3A52u, 0x0E1626u, d), ht_mix(0x1C2A3Au, 0x0A1018u, d));
@@ -468,7 +485,7 @@ static void ht_palette(void)
     r8_pal_ramp(HT_FORE, 4, ht_mix(0x0E1610u, 0x060806u, d), 0x020302u);
     r8_pal_ramp(HT_REED, 8, ht_mix(0x2A3A44u, 0x0E1620u, d), ht_mix(0x080E0Au, 0x030504u, d));   /* far .. near */
     {   /* the woods (darker than the hills), the branch over us; the stones; moonlight on the ridge; the farmhouse */
-        float mv = ml * ht.moon_vis;
+        float mv = ml * ht.mn_vis;
         r8_pal_ramp(HT_TREE, 4, ht_mix(0x1A2638u, 0x0A101Au, d), ht_mix(0x080C10u, 0x030406u, d));
         r8_pal_set(HT_STONE, ht_mix(ht_mix(0x3A4660u, 0x161C2Au, d), 0x9AA4BCu, 0.35f * mv));
         r8_pal_set(HT_STONE + 1, ht_mix(0x2A3448u, 0x10141Eu, d));
@@ -483,13 +500,6 @@ static void ht_palette(void)
     r8_pal_set(HT_GLOW + 7, 0xFCFFD8u);               /* the heart of a blink */
     r8_pal_ramp(HT_SHINE, 4, ht_mix(0x2C3C66u, 0xF4EED0u, 0.12f + 0.33f * ml), ht_mix(0x2C3C66u, 0xC8C4A8u, 0.06f + 0.16f * ml));
     r8_pal_ramp(HT_SHOOT, 4, 0xFFFFF4u, ht_mix(0x4A5C92u, 0x0B1226u, d));
-    {   /* the clouds: the sky's own blue, grayed and a little lighter (more with the moon), the edge the faintest */
-        uint32_t sky = ht_mix(0x4A5C92u, 0x0B1226u, d), gray = ht_mix(0x8A90A4u, 0x3C4458u, d);
-        r8_pal_set(HT_CLOUD, ht_mix(sky, gray, 0.28f + 0.12f * ml));                 /* a veil of cloud */
-        r8_pal_set(HT_CLOUD + 1, ht_mix(sky, 0xB8BECEu, 0.22f + 0.18f * ml));         /* lit, near the moon (soft) */
-        r8_pal_set(HT_CLOUD + 2, ht_mix(0xFBF6E2u, sky, 0.30f));                      /* the moon, lightly veiled */
-        r8_pal_set(HT_CLOUD + 3, ht_mix(0xFBF6E2u, sky, 0.55f));                      /* the moon, more */
-    }
     if (ht.mist > 0.01f || ht.rain > 0.01f) {   /* a mist over the field, the hills and the low sky; rain grays it
                                                  * all a little (the palette only, nothing more to draw) */
         uint32_t mc = ht_mix(ht_mix(0x8A90A0u, 0x2C3242u, d), 0xA0A6B4u, 0.15f * ml);
@@ -508,11 +518,19 @@ static void ht_palette(void)
         }
         for (i = 0; i < 4; i++)
             r8_base[HT_HALO + i] = ht_mix(r8_base[HT_HALO + i], mc, m * 0.3f);
+        for (i = 0; i < 2; i++)                      /* (the window, unlit: as the misty woods round it) */
+            r8_base[HT_HOUSE + i] = ht_mix(r8_base[HT_HOUSE + i], mc, (m * 0.6f + r) * (1.0f - fm_clampf(d * 2.5f - 0.2f, 0.0f, 1.0f)));
     }
     {   /* the fog: the mist's color, a little moonlit; and in rain the moon behind cloud */
         uint32_t mc = ht_mix(ht_mix(0x8A90A0u, 0x262C3Au, d), 0x9AA0B0u, 0.12f * ml);
-        r8_pal_set(HT_FOG, mc);
-        r8_pal_set(HT_FOG + 1, ht_mix(mc, ht_mix(0x4A5C92u, 0x0B1226u, d), 0.45f));
+        static const uint8_t BK[3] = {HT_GROUND + 1, HT_WATER, HT_WATER + 4};   /* (what each bank lies on) */
+        for (i = 0; i < 12; i++)                     /* the fog's shades: each bank's own, over what it lies on,
+                                                       * thin .. thick (mixed only with the next: no pattern) */
+            r8_pal_set(HT_FOGL + i, ht_mix(r8_base[BK[i >> 2]], mc, 0.17f * (float)((i & 3) + 1)));
+        for (i = 0; i < 3; i++)                      /* a firefly's light spread in the fog, faint .. strong */
+            r8_pal_set(HT_FOGG + i, ht_mix(r8_base[HT_FOGL + 1], 0xB8D860u, 0.12f + 0.13f * (float)i));
+        for (i = 0; i < 2; i++)                      /* the farmhouse window's light in the fog, faint .. warm */
+            r8_pal_set(HT_FOGW + i, ht_mix(r8_base[HT_FOGL + 2], 0xFFB860u, (0.1f + 0.12f * (float)i) * fm_clampf(d * 2.5f - 0.2f, 0.0f, 1.0f)));
         {   /* the Milky Way: the sky high up, a little lighter, cool */
             uint32_t sk = ht_mix(ht_mix(0x23305Eu, 0x06080Fu, d), 0x020306u, 0.6f * ht.deep);
             r8_pal_set(HT_MW, ht_mix(sk, 0x6A7290u, 0.16f));
@@ -528,15 +546,34 @@ static void ht_palette(void)
                 r8_base[HT_SKY + i] = ht_mix(r8_base[HT_SKY + i], ht_mix(0x5A6070u, 0x1C2028u, d), 0.45f * ht.rain);
         }
     }
+    {   /* the clouds, each its own shades from the sky at its height (so it lies in the sky, no pattern): six
+         * steps from barely there to its thickest, then the same lit by the moon, half and full; and the moon behind
+         * a cloud, each of its shades veiled in four steps */
+        uint32_t gray = ht_mix(0x8A90A4u, 0x3C4458u, d), silver = ht_mix(0xC4C8D6u, 0x9AA0B4u, d);
+        float mv = ht.mn_vis * (0.5f + 0.5f * ml);
+        int c, j;
+        for (c = 0; c < HT_NCLOUD; c++) {
+            int si = (int)(ht_c[c].y * (63.0f / (HT_HORIZON + 10.0f)));
+            uint32_t sk = r8_base[HT_SKY + (si < 0 ? 0 : si > 63 ? 63 : si)];
+            float th = c == 0 ? 0.45f : 0.7f;         /* (the far one fainter) */
+            for (j = 0; j < 6; j++) {
+                float a = th * (float)(j + 1) * (1.0f / 6.0f);
+                uint32_t un = ht_mix(sk, gray, a * 0.7f), li = ht_mix(sk, silver, a * (0.55f + 0.35f * mv));
+                r8_pal_set(HT_CLR + c * HT_CLR_N + j, un);
+                r8_pal_set(HT_CLR + c * HT_CLR_N + 6 + j, ht_mix(un, li, 0.5f * mv));
+                r8_pal_set(HT_CLR + c * HT_CLR_N + 12 + j, ht_mix(un, li, mv));
+            }
+        }
+        for (i = 0; i < 3; i++)
+            for (j = 0; j < 4; j++)
+                r8_pal_set(HT_MVEIL + i * 4 + j, ht_mix(r8_base[HT_MOON + i], r8_base[HT_CLR + HT_CLR_N + 3],
+                                                       0.16f * (float)(j + 1)));
+    }
     r8_pal_set(HT_RAIN, ht_mix(0x9AA6BEu, 0x56627Au, d));   /* rain: light, dim */
     r8_pal_set(HT_RAIN + 1, ht_mix(0x7884A0u, 0x404A60u, d));
     r8_pal_commit(0xFFFFFFu, 0, 0);
 }
 
-/* the moon's face, kept (ht_moon_stamp) */
-#define HT_MST 48
-static uint8_t ht_mst[HT_MST * HT_MST];
-static float ht_mst_k = -1.0f;                   /* the scale it was made at (< 0: to be made) */
 
 static void ht_mood_moon(int m);
 SC_SMALL static void ht_background(void)
@@ -546,33 +583,24 @@ SC_SMALL static void ht_background(void)
     int32_t x, y, W = s->w, H = s->h, hz = (int32_t)(HT_HORIZON * k);
     int i;
     sc_seed(ht.seed);
-    {   /* the moon: its size and phase (full and gibbous most nights, a crescent now and then) */
-        float u = sc_frand();
-        ht.moon_r = 8.5f * (1.0f + 1.4f * sc_frand());   /* (larger, up to ~20 px) */
-        /* the terminator, a half ellipse: lit where x >= c * sqrt(r^2 - y^2) (x mirrored when waning): c -1 full,
-         * -0.5 gibbous, 0 half, 0.6 a crescent (a disc of shadow had cut the half and gibbous moons concave) */
-        if (u < 0.4f) {
-            ht.moon_light = 1.0f;
-            ht.moon_off = -1.0f;
-        } else if (u < 0.7f) {
-            ht.moon_light = 0.8f;
-            ht.moon_off = -0.5f;
-        } else if (u < 0.9f) {
-            ht.moon_light = 0.55f;
-            ht.moon_off = 0.0f;
-        } else {
-            ht.moon_light = 0.3f;
-            ht.moon_off = 0.6f;
+    {   /* the moon: its size and phase (full and gibbous most nights, a crescent now and then); a new picture's
+         * only: drawn again (the style turned) the moon stays as it is tonight */
+        sc_moon_t m;
+        float top;
+        sc_moon_pick(&m, 1.0f);
+        top = 120.0f + 30.0f * sc_frand();             /* (its arc a little higher or lower each night) */
+        sc_mst_k = -1.0f;                             /* (its face to be made again) */
+        if (!ht.mn_made) {
+            ht.mn_made = 1;
+            ht.mn = m;
+            ht.moon_top = top;
+            ht.nat_light = m.light;
+            ht.nat_off = m.off;
+            ht.nat_side = m.side;
+            ht_mood_moon(ht.kv ? sc_mood_base(ht.kv[HK_MOOD], HT_NMOOD) : 0);
+            if (ht.kv)                                /* (a crescent: longer echoes) */
+                cd_echo_amount((float)ht.kv[HK_ECHO] * 0.01f + 0.3f * (1.0f - ht.mn.light));
         }
-        ht.moon_side = sc_frand() < 0.5f ? 1.0f : -1.0f;   /* waxing (lit on the right) or waning */
-        ht_mst_k = -1.0f;                             /* (its face to be made again: ht_moon_stamp) */
-        ht.moon_top = 120.0f + 30.0f * sc_frand();     /* (its arc a little higher or lower each night) */
-        ht.nat_light = ht.moon_light;
-        ht.nat_off = ht.moon_off;
-        ht.nat_side = ht.moon_side;
-        ht_mood_moon(ht.kv ? sc_mood_base(ht.kv[HK_MOOD], HT_NMOOD) : 0);
-        if (ht.kv)                                    /* (a crescent: longer echoes) */
-            cd_echo_amount((float)ht.kv[HK_ECHO] * 0.01f + 0.3f * (1.0f - ht.moon_light));
     }
     ht.wt_ph = sc_frand();
     ht.wb_ph = sc_frand();
@@ -682,7 +710,7 @@ SC_SMALL static void ht_background(void)
         }
     }
     {   /* a farmhouse window in the woods, far off: lit as the night comes (its glow round it) */
-        float hx = 30.0f + 180.0f * sc_frand(), hy = HT_HORIZON - 2.5f;
+        float hx = ht.hx = 30.0f + 180.0f * sc_frand(), hy = HT_HORIZON - 2.5f;
         r8_disc(s, hx * k, hy * k, 2.6f * k, HT_HOUSE + 1);
         r8_pset(s, (int32_t)(hx * k), (int32_t)(hy * k), HT_HOUSE);
         r8_pset(s, (int32_t)(hx * k) + 1, (int32_t)(hy * k), HT_HOUSE);
@@ -790,46 +818,70 @@ static int ht_cloud_gone(int c)                 /* wholly off the right edge (no
     return 1;
 }
 
-/* a veil of cloud over the sky (the thin bright streaks read as "weird horizontal lines" around the moon):
- * soft bands, densest along their middle and fading smoothly up, down and at the ends (dithered, the sky through
- * them). Near the moon a band is a little lighter (lit), with no bright edge; across the moon it dims it evenly, in
- * two soft steps */
+/* a cloud over the sky: thin streaks, each a soft band whose middle line and thickness wander along it and whose
+ * edges break up, densest along its middle. Each pixel takes one of the cloud's own shades by how thick the cloud is
+ * there (mixed only with the next shade: no pattern); near the moon the lit shades (its silver edge), half lit a
+ * little further off; across the moon, the moon veiled in steps by how thick it is */
 static void ht_cloud_draw(surf_t *s, float k, int c)
 {
-    int i, far = c == 0;
-    float mx = ht_moon_x() * k, my = ht_moon_y() * k, mr = ht.moon_r * k * fm_sqrtf(ht.moon_vis),   /* (lit near the
-                                                       * moon as much as it is seen) */
-          dens = far ? 0.4f : 0.6f;
+    int i;
+    float mx = ht_moon_x() * k, my = ht_moon_y() * k, mr = ht.mn.r * k * fm_sqrtf(ht.mn_vis),
+          ph = (float)c * 0.37f;
+    uint8_t c0 = (uint8_t)(HT_CLR + c * HT_CLR_N);
     for (i = 0; i < ht_c[c].np; i++) {
         float cx = (ht_c[c].x + ht_c[c].px[i]) * k, cy = (ht_c[c].y + ht_c[c].py[i]) * k, rx = ht_c[c].pr[i] * k,
-              ry = ((far ? 3.5f : 6.0f) + ht_c[c].pr[i] * 0.12f) * k;
-        int32_t x, y, x0 = (int32_t)(cx - rx - 1.0f), x1 = (int32_t)(cx + rx + 1.0f), y0 = (int32_t)(cy - ry - 1.0f),
-                y1 = (int32_t)(cy + ry + 1.0f);
-        for (y = y0 < 0 ? 0 : y0; y <= y1 && y < s->h; y++) {
-            float dy = ((float)y + 0.5f - cy) / ry, vy = 1.0f - dy * dy;
-            if (vy <= 0.0f)
+              ry = ((c == 0 ? 3.5f : 6.0f) + ht_c[c].pr[i] * 0.12f) * k, pp = ph + (float)i * 0.29f;
+        int32_t x, y, x0 = (int32_t)(cx - rx - 1.0f), x1 = (int32_t)(cx + rx + 1.0f);
+        for (x = x0 < 0 ? 0 : x0; x <= x1 && x < s->w; x++) {
+            float xw = ((float)x + 0.5f) / k - ht_c[c].x,  /* (its own place along it: the shape drifts with it) */
+                  dx = ((float)x + 0.5f - cx) / rx, ax = 1.0f - dx * dx,
+                  my0 = cy + 1.6f * k * fm_sin_turns(xw * 0.031f + pp),   /* (its middle line wandering) */
+                  ryx = ry * (0.65f + 0.35f * fm_sin_turns(xw * 0.053f + pp * 1.7f)),   /* (its thickness) */
+                  pa = 0.26f * fm_sin_turns(xw * 0.071f + pp), pb = xw * 0.017f + pp * 2.3f, ex = (float)x + 0.5f - mx,
+                  ex2 = ex * ex, far2 = 4.1f * 4.1f * (mr * mr + 1e-3f);
+            int32_t ya = (int32_t)(my0 - ryx - 1.0f), yb = (int32_t)(my0 + ryx + 1.0f);
+            if (ax <= 0.0f)
                 continue;
-            vy *= vy;                                 /* (a soft fall-off, top and bottom) */
-            for (x = x0 < 0 ? 0 : x0; x <= x1 && x < s->w; x++) {
+            for (y = ya < 0 ? 0 : ya; y <= yb && y < s->h; y++) {
                 uint8_t *p = s->px + y * s->w + x;
-                float dx = ((float)x + 0.5f - cx) / rx, a = (1.0f - dx * dx) * vy, ex, ey;
-                if (a <= 0.0f)
+                float dy = ((float)y + 0.5f - my0) / ryx, vy = 1.0f - dy * dy, a, v, ey, e2;
+                int lv, set;
+                if (vy <= 0.0f)
                     continue;
-                if (*p >= HT_MOON && *p < HT_MOON + 3) {   /* the moon behind: dimmed evenly by how dense the band is */
-                    int f = (int)(fm_minf(1.0f, a * dens * 1.6f) * 2.0f * 16.0f);
-                    int lv = (f >> 4) + r8_dith(x, y, f & 15);
-                    if (lv)
-                        *p = (uint8_t)(HT_CLOUD + 1 + lv);   /* (2: lightly veiled, 3: more) */
+                a = ax * vy * vy * (0.74f + pa * fm_sin_turns((float)y / k * 0.21f + pb));   /* (thicker and thinner in
+                                                       * soft patches) */
+                v = a * 6.0f;
+                lv = (int)v;
+                lv += r8_dith(x, y, (int)((v - (float)lv) * 16.0f));
+                if (lv <= 0)
+                    continue;
+                if (lv > 6)
+                    lv = 6;
+                if ((*p >= HT_MOON && *p < HT_MOON + 3) || (*p >= HT_MVEIL && *p < HT_MVEIL + 12)) {   /* the moon
+                                                       * behind: veiled in steps */
+                    int sh = *p >= HT_MVEIL ? (*p - HT_MVEIL) >> 2 : *p - HT_MOON, old = *p >= HT_MVEIL ? ((*p - HT_MVEIL) & 3) + 1 : 0,
+                        vl = (lv * 4 + 3) / 6;
+                    if (vl > old)
+                        *p = (uint8_t)(HT_MVEIL + sh * 4 + vl - 1);
                     continue;
                 }
-                if (*p >= HT_HILL && !(*p >= HT_CLOUD && *p < HT_CLOUD + 2) && !(*p >= HT_STW && *p < HT_STY + 2) &&
-                    *p != HT_STAR)
-                    continue;
-                if (!r8_dith(x, y, (int)(a * dens * 16.0f)))
-                    continue;                         /* (soft: the sky shows through) */
-                ex = (float)x + 0.5f - mx;
+                if (*p >= HT_CLR && *p < HT_CLR + HT_NCLOUD * HT_CLR_N) {   /* a cloud already: the thicker */
+                    int old = (*p - HT_CLR) % 6 + 1;
+                    if (lv <= old)
+                        continue;
+                } else if (*p >= HT_HILL && *p != HT_MW && *p != HT_MW + 1 && !(*p >= HT_STW && *p < HT_STY + 2) &&
+                           *p != HT_STAR)
+                    continue;                         /* (only over the sky, its stars and the Milky Way) */
                 ey = (float)y + 0.5f - my;
-                *p = (uint8_t)(ex * ex + ey * ey < mr * mr * 7.0f ? HT_CLOUD + 1 : HT_CLOUD);   /* lit near the moon */
+                e2 = ex2 + ey * ey;
+                set = 0;
+                if (e2 < far2) {                      /* lit near the moon: full, then half, mixed */
+                    float e = fm_sqrtf(e2) / (mr + 1e-3f);
+                    set = e < 1.7f ? 2 : e < 2.9f ? 1 : 0;
+                    if (set < 2 && r8_dith(x, y, (int)(((set ? 2.9f : 4.1f) - e) * 13.0f)))
+                        set++;
+                }
+                *p = (uint8_t)(c0 + set * 6 + lv - 1);
             }
         }
     }
@@ -846,12 +898,7 @@ static void ht_cloud_draw(surf_t *s, float k, int c)
 static struct {
     float t, x0, y0, l0, o0, s0, l1, o1, s1, o_made;
 } ht_mg = {99.0f, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-static float ht_moon_t_of(float off, float side)
-{
-    float age = off < -0.99f ? 0.5f : off < -0.4f ? 0.38f : off < 0.3f ? 0.25f : 0.12f,
-          rise = side > 0.0f ? (age - 0.5f) * 2.0f : (0.5f - age) * 2.0f;
-    return ht.night - rise;
-}
+static float ht_moon_t_of(float off, float side) { return sc_moon_t_of(ht.night, off, side); }
 static float ht_moon_x_of(float off, float side) { return 24.0f + 192.0f * fm_clampf(ht_moon_t_of(off, side), -0.05f, 1.05f); }
 /* (the path above: the moon's place for a phase, this night) */
 static float ht_moon_y_of(float off, float side)
@@ -866,25 +913,25 @@ static float ht_mg_u(void)
     float u = fm_clampf(ht_mg.t / HT_MG_S, 0.0f, 1.0f);
     return u * u * (3.0f - 2.0f * u);
 }
-static float ht_moon_t(void) { return ht_moon_t_of(ht_mg.t < HT_MG_S ? ht_mg.o1 : ht.moon_off, ht_mg.t < HT_MG_S ? ht_mg.s1 : ht.moon_side); }
+static float ht_moon_t(void) { return ht_moon_t_of(ht_mg.t < HT_MG_S ? ht_mg.o1 : ht.mn.off, ht_mg.t < HT_MG_S ? ht_mg.s1 : ht.mn.side); }
 static float ht_moon_x(void)
 {
     if (ht_mg.t < HT_MG_S)
         return ht_mg.x0 + (ht_moon_x_of(ht_mg.o1, ht_mg.s1) - ht_mg.x0) * ht_mg_u();
-    return ht_moon_x_of(ht.moon_off, ht.moon_side);
+    return ht_moon_x_of(ht.mn.off, ht.mn.side);
 }
 static float ht_moon_y(void)
 {
     if (ht_mg.t < HT_MG_S)
         return ht_mg.y0 + (ht_moon_y_of(ht_mg.o1, ht_mg.s1) - ht_mg.y0) * ht_mg_u();
-    return ht_moon_y_of(ht.moon_off, ht.moon_side);
+    return ht_moon_y_of(ht.mn.off, ht.mn.side);
 }
 
 /* a mood's moon: Festival a full moon (early in the night: rising over the hills), Deep Night a thin waxing crescent (set by then: none), Natural and Quiet Night the night's own. glide: on
  * its way there (a mood turned), else at once (a night begun) */
 static void ht_mood_moon_to(int m, int glide)
 {
-    float l = ht.moon_light, o = ht.moon_off, sd = ht.moon_side;
+    float l = ht.mn.light, o = ht.mn.off, sd = ht.mn.side;
     if (m == 2) {                                     /* (Festival) */
         l = 1.0f;
         o = -1.0f;
@@ -898,22 +945,22 @@ static void ht_mood_moon_to(int m, int glide)
         sd = ht.nat_side;
     }
     if (!glide) {
-        ht.moon_light = l;
-        ht.moon_off = o;
-        ht.moon_side = sd;
+        ht.mn.light = l;
+        ht.mn.off = o;
+        ht.mn.side = sd;
         ht_mg.t = 99.0f;
-        ht_mst_k = -1.0f;                             /* (its face made again) */
+        sc_mst_k = -1.0f;                             /* (its face made again) */
         return;
     }
     ht_mg.x0 = ht_moon_x();                           /* (from where it is now, even mid-glide) */
     ht_mg.y0 = ht_moon_y();
-    ht_mg.l0 = ht.moon_light;
-    ht_mg.o0 = ht.moon_off;
-    ht_mg.s0 = ht.moon_side;
+    ht_mg.l0 = ht.mn.light;
+    ht_mg.o0 = ht.mn.off;
+    ht_mg.s0 = ht.mn.side;
     ht_mg.l1 = l;
     ht_mg.o1 = o;
     ht_mg.s1 = sd;
-    ht_mg.o_made = ht.moon_off;
+    ht_mg.o_made = ht.mn.off;
     ht_mg.t = 0.0f;
 }
 static void ht_mood_moon(int m) { ht_mood_moon_to(m, 0); }
@@ -924,138 +971,34 @@ static void ht_moon_glide(float dt)               /* (each step) */
         return;
     ht_mg.t += dt;
     u = ht_mg_u();
-    ht.moon_light = ht_mg.l0 + (ht_mg.l1 - ht_mg.l0) * u;
+    ht.mn.light = ht_mg.l0 + (ht_mg.l1 - ht_mg.l0) * u;
     if (ht_mg.s0 == ht_mg.s1) {
         o = ht_mg.o0 + (ht_mg.o1 - ht_mg.o0) * u;
-        ht.moon_side = ht_mg.s1;
+        ht.mn.side = ht_mg.s1;
     } else if (u < 0.5f) {                            /* (lit on the other side: through the full moon) */
         o = ht_mg.o0 + (-1.0f - ht_mg.o0) * u * 2.0f;
-        ht.moon_side = ht_mg.s0;
+        ht.mn.side = ht_mg.s0;
     } else {
         o = -1.0f + (ht_mg.o1 + 1.0f) * (u - 0.5f) * 2.0f;
-        ht.moon_side = ht_mg.s1;
+        ht.mn.side = ht_mg.s1;
     }
     if (ht_mg.t >= HT_MG_S) {
-        ht.moon_light = ht_mg.l1;
+        ht.mn.light = ht_mg.l1;
         o = ht_mg.o1;
-        ht.moon_side = ht_mg.s1;
+        ht.mn.side = ht_mg.s1;
         if (ht.kv)
-            cd_echo_amount((float)ht.kv[HK_ECHO] * 0.01f + 0.3f * (1.0f - ht.moon_light));
+            cd_echo_amount((float)ht.kv[HK_ECHO] * 0.01f + 0.3f * (1.0f - ht.mn.light));
     }
-    ht.moon_off = o;
+    ht.mn.off = o;
     if (fm_fabsf(o - ht_mg.o_made) > 0.03f || ht_mg.t >= HT_MG_S) {   /* (the shadow moved: the face again) */
         ht_mg.o_made = o;
-        ht_mst_k = -1.0f;
+        sc_mst_k = -1.0f;
     }
 }
 
-/* the moon's face: the near side of a real map (the drawn seas read as "a peanut"): NASA's CGI Moon
- * Kit, public domain, shrunk by tools/zen_moon.py (assets/images/README.md) */
-#include "zen_moon.h"
-static int ht_moon_map(float u, float v)        /* its brightness at (u, v) in radii (x right, y down): 1 .. 255 */
+static void ht_draw_moon(surf_t *s, float k)     /* the moon (scene.h): only over the sky, the hills in front */
 {
-    float fx = (u * 0.5f + 0.5f) * (float)ZN_MOON_N - 0.5f, fy = (v * 0.5f + 0.5f) * (float)ZN_MOON_N - 0.5f, ax, ay;
-    int x0 = (int)fm_floorf(fx), y0 = (int)fm_floorf(fy), x1, y1, a, b, c, d;
-    ax = fx - (float)x0;
-    ay = fy - (float)y0;
-    x0 = x0 < 0 ? 0 : x0 >= ZN_MOON_N ? ZN_MOON_N - 1 : x0;
-    y0 = y0 < 0 ? 0 : y0 >= ZN_MOON_N ? ZN_MOON_N - 1 : y0;
-    x1 = x0 + 1 < ZN_MOON_N ? x0 + 1 : x0;
-    y1 = y0 + 1 < ZN_MOON_N ? y0 + 1 : y0;
-    a = ZN_MOON[y0 * ZN_MOON_N + x0];
-    b = ZN_MOON[y0 * ZN_MOON_N + x1];
-    c = ZN_MOON[y1 * ZN_MOON_N + x0];
-    d = ZN_MOON[y1 * ZN_MOON_N + x1];
-    if (!a || !b || !c || !d) {                     /* (at the rim: the nearest that is on the disc) */
-        int m = a > b ? a : b;
-        m = m > c ? m : c;
-        return m > d ? m : d;
-    }
-    return (int)((float)a + ((float)b - (float)a) * ax + ((float)c - (float)a) * ay +
-                 ((float)a - (float)b - (float)c + (float)d) * ax * ay);
-}
-
-/* the moon's face, worked out once (the seas a pixel at a time were most of the moon's 5.9 ms a frame on the
- * FM-1): a stamp of its disc (0 outside it), redone only when the picture or the scale changes; the moon moves by
- * whole pixels across the night */
-static void ht_moon_stamp(float k)
-{
-    float r = ht.moon_r * k, c = (float)(HT_MST / 2), soft = fm_maxf(1.2f, 0.12f * r), r2 = r * r, ir2 = 1.0f / r2;
-    int32_t x, y;
-    for (y = 0; y < HT_MST; y++) {
-        float dy = (float)y + 0.5f - c, dy2 = dy * dy,
-              half = ht.moon_off < -0.99f ? 0.0f : ht.moon_off * fm_sqrtf(fm_maxf(0.0f, r2 - dy2));
-        for (x = 0; x < HT_MST; x++) {
-            uint8_t *p = ht_mst + y * HT_MST + x;
-            float dx = (float)x + 0.5f - c, d2 = dx * dx + dy2;
-            *p = 0;
-            if (d2 < r2) {
-                float u = dx / r, v = dy / r, rr = d2 * ir2,
-                      sh = ht.moon_off < -0.99f ? -1e9f : half - dx * ht.moon_side,   /* > 0: in shadow, px */
-                      sea = fm_clampf((165.0f - (float)ht_moon_map(u, v)) * (1.0f / 110.0f), 0.0f, 1.0f);   /* (the
-                                                       * map: its dark seas, dithered into the highlands) */
-                if (sh > soft) {                      /* in the shadow (the phase): the faint earthshine */
-                    *p = HT_MOON + 3;
-                    continue;
-                }
-                if (sea > 0.0f && r8_dith(x, y, (int)(sea * 16.0f)))
-                    *p = HT_MOON + 2;
-                else if (rr > 0.6f && r8_dith(x, y, (int)((rr - 0.6f) * 2.5f * 12.0f)))
-                    *p = HT_MOON + 1;                 /* a gentle darkening toward the rim */
-                else
-                    *p = HT_MOON;
-                if (sh > -soft && !r8_dith(x, y, (int)((soft - sh) / (2.0f * soft) * 16.0f)))
-                    *p = HT_MOON + 3;                 /* the terminator: lit fading into shadow */
-            }
-        }
-    }
-    ht_mst_k = k;
-}
-
-static void ht_draw_moon(surf_t *s, float k)
-{
-    float r = ht.moon_r * k, hr = r * (1.4f + 0.1f * ht.moon_light) + 1.0f * k,   /* (a thin soft rim, about a
-                                                       * quarter of its width: the moon's light on the air) */
-          r2 = r * r, hr2 = hr * hr, ih = 1.0f / (hr2 - r2);
-    int32_t ox = (int32_t)(ht_moon_x() * k) - HT_MST / 2, oy = (int32_t)(ht_moon_y() * k) - HT_MST / 2,
-            x, y, x0, x1, y0, y1;
-    float mx = (float)(ox + HT_MST / 2), my = (float)(oy + HT_MST / 2);   /* (on whole pixels, as the stamp) */
-    uint32_t on = 0, seen = 0;
-    if (ht_mst_k != k)
-        ht_moon_stamp(k);
-    x0 = (int32_t)(mx - hr);
-    x1 = (int32_t)(mx + hr);
-    y0 = (int32_t)(my - hr);
-    y1 = (int32_t)(my + hr);
-    for (y = y0 < 0 ? 0 : y0; y <= y1 && y < s->h; y++) {
-        float dy = (float)y + 0.5f - my, dy2 = dy * dy;
-        uint8_t *row = s->px + y * s->w;
-        if (dy2 > hr2)
-            continue;
-        for (x = x0 < 0 ? 0 : x0; x <= x1 && x < s->w; x++) {
-            uint8_t *p = row + x;
-            float dx = (float)x + 0.5f - mx, d2 = dx * dx + dy2;
-            if (d2 < r2)
-                on++;                                 /* (the disc on the screen; below, the part seen) */
-            if (d2 >= hr2 || *p >= HT_MOON)           /* only over the sky: the hills and trees stand in front */
-                continue;
-            if (d2 < r2) {
-                int32_t sx = x - ox, sy = y - oy;
-                if (sx >= 0 && sy >= 0 && sx < HT_MST && sy < HT_MST && ht_mst[sy * HT_MST + sx]) {
-                    *p = ht_mst[sy * HT_MST + sx];
-                    seen++;
-                }
-            } else {
-                float u = (d2 - r2) * ih, g = (1.0f - u) * (1.0f - u) * 4.0f;   /* (0..1 across the glow, in squared
-                                                       * distance; its light, 4 at the moon .. 0: the levels dithered
-                                                       * into each other, no ring) */
-                int f = (int)(g * 16.0f), lv = (f >> 4) + r8_dith(x, y, f & 15);
-                if (lv > 0)
-                    *p = (uint8_t)(HT_HALO + 4 - (lv > 4 ? 4 : lv));
-            }
-        }
-    }
-    ht.moon_vis = on ? (float)seen / (float)on : 0.0f;
+    ht.mn_vis = sc_moon_draw(s, k, &ht.mn, ht_moon_x() * k, ht_moon_y() * k, HT_MOON, HT_MOON, HT_HALO, 4) * ht_moon_tw();
 }
 
 /* the stream: the moon's light on it, a column of short wavering dashes under the moon; the fireflies' glows,
@@ -1064,12 +1007,12 @@ static void ht_draw_stream(surf_t *s, float k)
 {
     float mx = ht_moon_x(), my = ht_moon_y(), wt = ht_wtop(mx);
     int i, n;
-    if (my < wt - 2.0f && ht.moon_vis > 0.03f) {     /* the moon is up, and seen (its light
+    if (my < wt - 2.0f && ht.mn_vis > 0.03f) {     /* the moon is up, and seen (its light
                                                        * showed at dusk with the moon behind the hills): its glade on
                                                        * the water (chose a path of light the moon's
                                                        * own width, widening toward the near bank, its slices
                                                        * shimmering in place), as wide as the moon is seen */
-        float wb = ht_wbot(mx), r = ht.moon_r * fm_sqrtf(ht.moon_vis);
+        float wb = ht_wbot(mx), r = ht.mn.r * fm_sqrtf(ht.mn_vis);
         int slot = (int)(ht.t * 2.5f);                /* (the glints change a few times a second) */
         for (n = 0; n < 36; n++) {                    /* a glade of broken glints: short dashes scattered about the
                                                        * moon's line, wider and more scattered toward us */
@@ -1166,7 +1109,7 @@ static void ht_stars_draw(surf_t *s, float k)
     ht_deep_draw(s, k);                               /* (Deep Night's: under the stars) */
     int i;
     float mx = ht_moon_x(), my = ht_moon_y(),
-          glare = (ht.moon_r * (1.6f + 2.2f * ht.moon_light) + 12.0f) * ht.moon_vis,   /* (a moon not seen: no glare) */
+          glare = (ht.mn.r * (1.6f + 2.2f * ht.mn.light) + 12.0f) * ht.mn_vis,   /* (a moon not seen: no glare) */
           dep = ht.depth * 255.0f + 40.0f;
     for (i = 0; i < HT_NSTAR; i++) {
         float x = (float)ht_st[i].x, y = (float)ht_st[i].y, dx = x - mx, dy = y - my, d2 = dx * dx + dy * dy, lv;
@@ -1283,24 +1226,57 @@ static void ht_draw(void)
         }
     }
     if (ht.mist > 0.02f) {                            /* the mist:
-                                                       * soft pale bands of fog lying low over the field and the
-                                                       * stream, drifting, thicker in places; the reeds' feet in it */
+                                                       * wisps of fog lying low over the field and the stream in
+                                                       * three banks, drifting, thick in places with gaps between;
+                                                       * toward dawn they rise and thin. Each pixel takes one of its
+                                                       * bank's shades by how thick the fog is there (mixed only with
+                                                       * the next shade: no pattern), over the land, the water and
+                                                       * the stones; the reeds stand in it, in front. A little thicker
+                                                       * under the moon; the farmhouse window warm through it */
         static const float YC[3] = {HT_HORIZON + 6.0f, HT_WTOP + 2.0f, (HT_WTOP + HT_WBOT) * 0.5f + 4.0f}, HH[3] = {6.0f, 10.0f, 12.0f};
+        float dawn = fm_clampf((ht.night - 0.75f) * 4.0f, 0.0f, 1.0f), mxw = ht_moon_x(),
+              mlit = 0.6f * ht.mn_vis * ht.mn.light;
         int bnd;
         for (bnd = 0; bnd < 3; bnd++) {
-            int32_t y, x, y0 = (int32_t)((YC[bnd] - HH[bnd] - 4.0f) * k), y1 = (int32_t)((YC[bnd] + HH[bnd] + 4.0f) * k);
-            for (y = y0 < 0 ? 0 : y0; y <= y1 && y < s->h; y++) {
-                uint8_t *row = s->px + y * s->w;
-                for (x = 0; x < s->w; x++) {          /* (each bank's middle and thickness wander along it: uneven,
-                                                       * lying low, thicker in places, gaps between) */
-                    float xw = (float)x / k, yc = YC[bnd] + 3.0f * fm_sin_turns(xw * 0.011f + (float)bnd * 0.4f + ht.t * 0.003f),
-                          hh = HH[bnd] * (0.6f + 0.5f * fm_sin_turns(xw * 0.017f - ht.t * 0.005f + (float)bnd)),
-                          dy = ((float)y / k - yc) / fm_maxf(hh, 1.0f), v = 1.0f - dy * dy,
-                          n = 0.55f + 0.35f * fm_sin_turns(xw * 0.006f + ht.t * 0.004f + (float)bnd * 0.3f) +
-                              0.2f * fm_sin_turns(xw * 0.023f - ht.t * 0.007f);
-                    int t = v > 0.0f ? (int)(ht.mist * v * v * 0.6f * n * 16.0f) : 0;
-                    if (r8_dith(x, y + bnd, t))
-                        row[x] = (uint8_t)(HT_FOG + (t < 9));
+            float yb = YC[bnd] - 5.0f * dawn, bf = (float)bnd;
+            int32_t y, x, y0 = (int32_t)((yb - HH[bnd] - 5.0f) * k), y1 = (int32_t)((yb + HH[bnd] + 5.0f) * k);
+            for (x = 0; x < s->w; x++) {          /* (each bank's middle and thickness wander along it: uneven,
+                                                   * lying low, thicker in places, gaps between) */
+                float xw = (float)x / k, yc = yb + 3.0f * fm_sin_turns(xw * 0.011f + bf * 0.4f + ht.t * 0.003f),
+                      hh = HH[bnd] * (0.6f + 0.5f * fm_sin_turns(xw * 0.017f - ht.t * 0.005f + bf)),
+                      n = 0.55f + 0.35f * fm_sin_turns(xw * 0.006f + ht.t * 0.004f + bf * 0.3f) +
+                          0.2f * fm_sin_turns(xw * 0.023f - ht.t * 0.007f),
+                      wa = 0.5f + 0.5f * fm_sin_turns(xw * 0.009f - ht.t * 0.0023f + bf * 0.7f),   /* (where the
+                                                   * wisps are: they come and go along it) */
+                      ex = (xw - mxw) * (1.0f / 70.0f), lift = mlit * fm_maxf(0.0f, 1.0f - ex * ex),
+                      hw = (xw - ht.hx) * (1.0f / 9.0f);
+                n = (n - 0.12f) * ht.mist * (1.0f - 0.55f * dawn);
+                for (y = y0 < 0 ? 0 : y0; y <= y1 && y < s->h; y++) {
+                    uint8_t *p = s->px + y * s->w + x;
+                    float yw = (float)y / k, dy = (yw - yc) / fm_maxf(hh, 1.0f), v = 1.0f - dy * dy,
+                          st = fm_sin_turns(xw * 0.021f + yw * 0.16f + ht.t * 0.006f + bf * 1.9f), a, hv;
+                    int lv, old, l2;
+                    if (v <= 0.0f)
+                        continue;
+                    a = v * v * n * (1.0f + 0.45f * wa * st) * (1.0f + lift) * 4.6f;   /* (the wisps: long thin
+                                                   * strands, lying almost flat) */
+                    lv = (int)a;
+                    lv += r8_dith(x, y, (int)((a - (float)lv) * 16.0f));
+                    if (lv <= 0)
+                        continue;
+                    if (lv > 4)
+                        lv = 4;
+                    old = *p >= HT_FOGL ? ((*p - HT_FOGL) & 3) + 1 : 0;
+                    if (old >= lv)
+                        continue;                 /* (where two banks meet: the thicker) */
+                    if (!old && !(*p < HT_SKY + 64 || (*p >= HT_HILL && *p < HT_GROUND + 8) ||
+                                  (*p >= HT_WATER && *p < HT_WATER + 8) || (*p >= HT_TREE && *p < HT_HOUSE + 2) ||
+                                  *p == HT_MW || *p == HT_MW + 1))
+                        continue;                 /* (the reeds, the fireflies, the glints: in front) */
+                    hv = hw * hw + (yw - HT_HORIZON + 2.5f) * (yw - HT_HORIZON + 2.5f) * (1.0f / 81.0f);
+                    l2 = lv < 2 || hv >= 1.0f ? 0 : (int)((1.0f - hv) * 32.0f);   /* (near it: two warm steps) */
+                    l2 = (l2 >> 4) + r8_dith(x, y, l2 & 15);
+                    *p = (uint8_t)(l2 ? HT_FOGW + (l2 > 1) : HT_FOGL + bnd * 4 + lv - 1);
                 }
             }
         }
@@ -1343,16 +1319,25 @@ static void ht_draw(void)
                         *q = HT_GLOW;
                 }
         }
-        if (ht.mist > 0.2f && f->flash <= 0.05f) {   /* in a mist, the light spread into a soft blur: a
-                                                       * dithered glow, thinning outward */
+        if (ht.mist > 0.2f && f->flash <= 0.05f) {   /* in a mist, the light spread into a soft blur, in
+                                                       * steps thinning outward */
             float r = (3.0f + 6.0f * g) * ht.mist * k;
             int32_t yy, xx;
             for (yy = (int32_t)(y - r); yy <= (int32_t)(y + r); yy++)
                 for (xx = (int32_t)(x - r); xx <= (int32_t)(x + r); xx++) {
                     float dx = ((float)xx + 0.5f - x) / r, dy = ((float)yy + 0.5f - y) / r, d2 = dx * dx + dy * dy;
-                    if (d2 < 1.0f && xx >= 0 && yy >= 0 && xx < s->w && yy < s->h &&
-                        r8_dith(xx, yy, (int)((1.0f - d2) * 9.0f)))
-                        s->px[yy * s->w + xx] = HT_GLOW + 2;
+                    uint8_t *q;
+                    int lv;
+                    if (d2 >= 1.0f || xx < 0 || yy < 0 || xx >= s->w || yy >= s->h)
+                        continue;
+                    q = s->px + yy * s->w + xx;
+                    lv = (int)((1.0f - d2) * (1.0f - d2) * (1.0f + 2.5f * g) * 16.0f);   /* (shades by how near,
+                                                       * mixed only with the next) */
+                    lv = (lv >> 4) + r8_dith(xx, yy, lv & 15);
+                    if (lv > 3)
+                        lv = 3;
+                    if (lv > 0 && !(*q >= HT_GLOW && *q < HT_GLOW + 8) && !(*q >= HT_FOGG + lv - 1 && *q < HT_FOGG + 3))
+                        *q = (uint8_t)(HT_FOGG + lv - 1);
                 }
         }
         if (f->flash > 0.05f) {                       /* a key's flash: a wide halo and a white heart */
@@ -1586,9 +1571,17 @@ static void ht_step(uint32_t dt_ms)
     ht.t += dt;
     ht.ms += cdt;
     if (ht.hold < 0.0f) {                             /* the night: dusk (0) .. deep (0.5) .. dawn; half an hour
-                                                       * (Natural; was 12 min) */
+                                                       * (Natural) */
         ht.night += dt * (1.0f / 1800.0f);
-        if (ht.night >= 1.0f) {
+        if (ht.night >= 1.0f) {                       /* a new night: another moon (its size the same), at once:
+                                                       * never seen changing, as either is pale in the twilight
+                                                       * (ht_moon_tw) */
+            sc_moon_t m;
+            sc_moon_repick(&m, 1.0f, ht.seed * 2246822519u + 977u * ++ht.moons);
+            ht.nat_light = m.light;
+            ht.nat_off = m.off;
+            ht.nat_side = m.side;
+            ht_mood_moon_to(ht.kv ? sc_mood_base(ht.kv[HK_MOOD], HT_NMOOD) : 0, 0);
             ht.night -= 1.0f;
             ht.emerge = 0.25f;                        /* (a new night: they come out again) */
             cd_dawn();
@@ -1679,7 +1672,7 @@ static void ht_step(uint32_t dt_ms)
             if (ht.spl[i].t > 0.0f)
                 ht.spl[i].t -= dt;
     }
-    ht.tokens = fm_minf(2.0f, ht.tokens + dt * (0.12f + 0.45f * a) * (0.6f + 0.7f * ht.moon_light));   /* a chord
+    ht.tokens = fm_minf(2.0f, ht.tokens + dt * (0.12f + 0.45f * a) * (0.6f + 0.7f * ht.mn.light));   /* a chord
                                                        * every ~3 s at the default (a full moon more, a crescent fewer) */
     if (ht.kv[HK_FROGS] > 0) {
         ht.frog_next -= dt;
@@ -1906,7 +1899,7 @@ SC_SMALL static void ht_knob(int i, int32_t e)
         ht.sync = HT_MOOD_SYNC[m];
         ht_mood_moon_to(m, 1);                        /* (gliding there) */
         cd_activity((float)ht.kv[HK_ACT] * 0.01f);
-        cd_echo_amount((float)ht.kv[HK_ECHO] * 0.01f + 0.3f * (1.0f - ht.moon_light));
+        cd_echo_amount((float)ht.kv[HK_ECHO] * 0.01f + 0.3f * (1.0f - ht.mn.light));
         ht_mix_levels();
         ht_weather_set(0);
         ht_depth_send();
@@ -1947,7 +1940,7 @@ SC_SMALL static void ht_knob(int i, int32_t e)
     switch (i) {
     case HK_ACT: cd_activity((float)ht.kv[HK_ACT] * 0.01f); break;
     case HK_TONE: fm_part_patch(1, HT_TONE_SLOT[ht.kv[HK_TONE] % HT_NTONE]); break;
-    case HK_ECHO: cd_echo_amount((float)ht.kv[HK_ECHO] * 0.01f + 0.3f * (1.0f - ht.moon_light)); break;
+    case HK_ECHO: cd_echo_amount((float)ht.kv[HK_ECHO] * 0.01f + 0.3f * (1.0f - ht.mn.light)); break;
     case HK_WATERIS: ht_water(); break;
     case HK_AIRIS: fm_bed_style(FM_BED_WIND, ht.kv[HK_AIRIS]); ht.insects_sent = -1; break;
     case HK_NOTES: case HK_DRONE: case HK_AIR: case HK_FROGS: ht_mix_levels(); break;
@@ -1986,6 +1979,8 @@ SC_SMALL static void ht_regrow(uint32_t seed)
 {
     int i;
     ht.seed = seed | 1u;
+    ht.mn_made = 0;                                   /* (a new picture: its own moon) */
+    ht.moons = 0;
     ht_background();
     for (i = 0; i < HT_MAXF; i++)
         ht_f[i].perch = -1;
