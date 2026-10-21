@@ -27,6 +27,17 @@
  *   oldsound N                   scene slot N's saved knobs as from before its sounds changed (proj.sound[N] = 0)
  *   jrtear N                     a power cut on the Nth save-journal page program from now (half of it written,
  *                                nothing after, until a reboot)
+ *
+ * The SMK-37 build (host/build_host.sh smk37: build/host/zen_host_smk37), its controls too:
+ *   kbkey K [down|up]            keybed key K (0..36 = C3..C6), tapped or held / let go; key / tapkey K are the
+ *                                middle 27 as above
+ *   pad P [down|up]              pad P (0..7 the top row, 8..15 the bottom row), tapped or held / let go: a white key
+ *   sbtn NAME                    tap KNOB_BANK FADER_BANK LEFT RIGHT
+ *   fader I V                    fader I (0..3) to V (0..127); they start at 64
+ *   wheel pitch|mod V            pitch -127..127, mod 0..127
+ *   pads                         print the pads' colours
+ * expect (SMK-37): padrN / padgN / padbN (pad N's red / green / blue), smkbend (the wheel's bend: bit 0 down, bit 1
+ * up), smkvib (the mod wheel's vibrato)
  */
 #define OM_HOST 1
 #define FM_HOST 1
@@ -114,7 +125,19 @@ static uint32_t lit_btn, lit_keys;
 
 uint32_t plat_ms(void) { return now_ms; }
 uint32_t plat_buttons(void) { return held_btn; }
+#if BOARD_SMK37
+/* as the device: the keybed's F3..G5, its outer keys an octave in, and the pads as the white keys */
+static uint32_t pad_keys;
+static uint64_t kb_held;
+uint32_t plat_keys(void)
+{
+    uint32_t n = held_keys | pad_keys | (uint32_t)(kb_held >> 5 & 0x7FFFFFFu);
+    n |= (uint32_t)(kb_held & 0x1Fu) << 7 | (uint32_t)(kb_held >> 32 & 0x1Fu) << 15;
+    return n & ((1u << NKEYS) - 1u);
+}
+#else
 uint32_t plat_keys(void) { return held_keys; }
+#endif
 int32_t plat_enc(int role)
 {
     int32_t v = enc_acc[role];
@@ -144,6 +167,33 @@ void plat_leds_dim(uint32_t b, uint32_t k)   /* (a scene's panel: these dim) */
     dim_set = 1;
 }
 void plat_play_red(int red) { (void)red; }      /* the device's PLAY color: green, red while recording */
+#if BOARD_SMK37
+/* the SMK-37's own controls (plat.h SMK section), driven by the script */
+static uint32_t smk_btn_held;
+static int fader_v[4] = {64, 64, 64, 64};
+static int32_t wheel_p, wheel_m;
+static int wheel_new;
+static uint8_t pad_rgb[SMK_NPADS][3];
+uint32_t plat_smk_buttons(void) { return smk_btn_held; }
+int plat_fader(int i) { return (uint32_t)i < 4u ? fader_v[i] : -1; }
+int plat_wheels(int32_t *pitch, int32_t *modw)
+{
+    if (!wheel_new)
+        return 0;
+    wheel_new = 0;
+    *pitch = wheel_p;
+    *modw = wheel_m;
+    return 1;
+}
+void plat_pad_rgb(int p, uint8_t r, uint8_t g, uint8_t b)
+{
+    if ((uint32_t)p < SMK_NPADS) {
+        pad_rgb[p][0] = r;
+        pad_rgb[p][1] = g;
+        pad_rgb[p][2] = b;
+    }
+}
+#endif
 
 #define MQ 256
 static uint32_t min_q[MQ], mi_w, mi_r;
@@ -534,6 +584,14 @@ static int expect(const char *what, const char *val)
     int got;
     if (!strcmp(what, "view"))
         got = ui.view;
+#if BOARD_SMK37
+    else if (!strncmp(what, "pad", 3) && (what[3] == 'r' || what[3] == 'g' || what[3] == 'b'))   /* padgN: pad N's green */
+        got = pad_rgb[atoi(what + 4) & 15][what[3] == 'r' ? 0 : what[3] == 'g' ? 1 : 2];
+    else if (!strcmp(what, "smkbend"))            /* the pitch wheel's bend held: bit 0 down, bit 1 up */
+        got = smk.bend[0] | smk.bend[1] << 1;
+    else if (!strcmp(what, "smkvib"))             /* the mod wheel's vibrato on */
+        got = smk.vib;
+#endif
     else if (!strcmp(what, "dirty"))
         got = ui.dirty;
     else if (!strcmp(what, "mode"))               /* 0 the instrument, 1 ambient */
@@ -883,6 +941,55 @@ int main(int argc, char **argv)
                     held_keys &= ~(1u << k);
                 run_ms(2);
             }
+#if BOARD_SMK37
+        } else if (!strcmp(cmd, "kbkey")) {          /* keybed key K: tapped, or down / up */
+            int k = atoi(a) % 37, down = !b[0] || !strcmp(b, "down"), up = !b[0] || !strcmp(b, "up");
+            if (down) {
+                kb_held |= 1ull << k;
+                run_ms(up ? 60 : 2);
+            }
+            if (up) {
+                kb_held &= ~(1ull << k);
+                run_ms(30);
+            }
+        } else if (!strcmp(cmd, "pad")) {            /* pad P: its white key (the bottom row 0..7, the top row 8..15) */
+            int pd = atoi(a) & 15, down = !b[0] || !strcmp(b, "down"), up = !b[0] || !strcmp(b, "up");
+            uint32_t bit = 1u << WHITE_K[PLAT_PAD_OF_WHITE(pd)];   /* (the mapping is its own inverse) */
+            if (down) {
+                pad_keys |= bit;
+                run_ms(up ? 60 : 2);
+            }
+            if (up) {
+                pad_keys &= ~bit;
+                run_ms(30);
+            }
+        } else if (!strcmp(cmd, "sbtn")) {
+            static const char *const SB_N[NSB] = {"KNOB_BANK", "FADER_BANK", "LEFT", "RIGHT"};
+            int i = find_name(SB_N, NSB, a);
+            if (i < 0) {
+                printf("line %d: no SMK button %s\n", lineno, a);
+                return 2;
+            }
+            smk_btn_held |= 1u << i;
+            run_ms(40);
+            smk_btn_held &= ~(1u << i);
+            run_ms(40);
+        } else if (!strcmp(cmd, "fader")) {
+            fader_v[atoi(a) & 3] = atoi(b);
+            run_ms(20);
+        } else if (!strcmp(cmd, "wheel")) {
+            if (a[0] == 'p')
+                wheel_p = atoi(b);
+            else
+                wheel_m = atoi(b);
+            wheel_new = 1;
+            run_ms(20);
+        } else if (!strcmp(cmd, "pads")) {
+            int i;
+            for (i = 0; i < SMK_NPADS; i++)
+                printf("%s%3d,%3d,%3d%s", i % 8 ? " " : "  pads: ", pad_rgb[i][0], pad_rgb[i][1], pad_rgb[i][2],
+                       i % 8 == 7 ? "\n" : "");
+#endif
         } else if (!strcmp(cmd, "strum")) {          /* strum A B [MS]: a finger across the white keys */
             int x = atoi(a), y = atoi(b), gap = c[0] ? atoi(c) : 25, s = y >= x ? 1 : -1;
             for (;; x += s) {

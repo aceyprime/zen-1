@@ -16,6 +16,7 @@ complete corresponding source under the same license.
 | `firmware/src/dsp/fm6_patch.c` (patch formats), `tools/gen_fm6_tables.py` and the generated `fm6_tables.h`, the helpers in `tools/fumi_patches.py` | Felucca's `eng_fm6.c`, `tools/gen_tables.py`, `tools/gen_fm6_patches.py` | GPL-3.0-only |
 | `firmware/src/dsp/fastmath.h` | Felucca, via FoMni | GPL-3.0-only |
 | The pitch core, the instrument (`firmware/src/dsp/{tuning,smooth,bend,fumi}.*`, `fumi_patches.h`), `web/bench/`, `tools/{analyze_ref,syx_dump,fumi_patches,check_no_double}.py`, `tools/koto_search.c`, `tools/guard_platform.sh` | [FuMi-1](https://github.com/cartesive/fumi-1) | GPL-3.0-only |
+| The M-Vave SMK-37 port: `firmware/hal/smk_input.h`, `firmware/hal/fm1_flash_map.h`, the code behind `BOARD_SMK37`, `tests/smk_*`, `tests/scenarios/smk37/`, `web/test_web.mjs` | the SMK-37 board layer, adapted for ZEN-1 (authors in the files' headers) | GPL-3.0-only |
 | Everything else: the scenes, the conductor, the renderer and UI (`firmware/src/app/`), the nature beds (`firmware/src/dsp/bed.c`, `zen_*.h`), `tools/zen_*`, the site and guide (`web/site/`), `tests/`, `docs/` | ZEN-1 | GPL-3.0-only |
 
 ## Third-party material
@@ -40,7 +41,7 @@ complete corresponding source under the same license.
 ## Trademarks
 
 Suiko, 水光トレーナー and ST-50 are names of 水光社 (Suikohsha), used here only to say what inspired FuMi-1, whose instrument ZEN-1 keeps.
-"Felucca" and "Hügelton Instruments" are names of Hügelton Instruments. "M-VAVE" and "FM-1" are trademarks
+"Felucca" and "Hügelton Instruments" are names of Hügelton Instruments. "M-VAVE", "FM-1" and "SMK-37" are trademarks
 of their respective owners. DX7 is a trademark of Yamaha. ZEN-1 is independent firmware; it is not
 affiliated with, endorsed by or supported by any of them.
 

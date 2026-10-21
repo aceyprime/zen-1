@@ -14,6 +14,7 @@ quite the same. When you want to, reach in: the keys play along with the scene, 
 - **Try it in the browser** (no FM-1 needed): the emulator runs the very code the FM-1 runs, with sound
 - **Install it** from Chrome or Edge with the FM-1 on USB, or with `tools/fm1_install.py`
 - **The guide**: every control, knob, mood and scene
+- **M-Vave SMK-37:** ZEN-1 also builds for the SMK-37; see [SMK37.md](SMK37.md)
 
 The emulator, the installer and the guide are on the project's GitHub Pages site (`tools/publish_pages.sh`).
 
