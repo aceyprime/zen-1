@@ -22,7 +22,8 @@ spin K2 10
 expect knob11 50
 expect knob0 4
 expect tweaks 16
-# another mood is as it was made; back to Night: the tweak is there
+# another mood is as it was made; back to Night: the tweak is there (Music, Key, round to Scene)
+tap FX
 tap FX
 spin K1 2
 expect knob0 0

@@ -1,0 +1,53 @@
+# the Key page (FX's fifth): Key, Scale, Chord and Drift, one setting for every mood and scene. A fixed key and
+# scale hold through a mood change, and the mood's own come back with Mood; Held keeps the home chord; the settings
+# are kept across a power-off and go back to Mood with the reset (SAVE held)
+wait 800
+expect tonic 9
+expect scalenow 1
+tap FX
+tap FX
+tap FX
+tap FX
+tap FX
+wait 300
+spin K1 3
+wait 300
+expect tonic 2
+spin K2 2
+wait 300
+expect scalenow 0
+spin K3 1
+wait 300
+expect chord 0
+wait 200000
+expect chord 0
+# Golden Hour: its own key a fourth down and Min'yo, but the page holds D and In
+turn ALGO 3
+wait 300
+expect knob0 3
+wait 33000
+expect tonic 2
+expect scalenow 0
+tap FX
+tap FX
+tap FX
+tap FX
+tap FX
+wait 300
+spin K1 -3
+spin K2 -2
+wait 300
+expect tonic 4
+expect scalenow 2
+# kept: G, across a power-off
+spin K1 8
+wait 25000
+reboot
+wait 800
+expect tonic 7
+# the reset: as the mood has it again
+press SAVE
+wait 3500
+release SAVE
+wait 1500
+expect tonic 9

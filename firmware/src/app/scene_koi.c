@@ -92,7 +92,7 @@ static const struct {
 #define KP_NREFL 3
 #define KP_NLIGHT 8                         /* the light on the floor: rippled lines */
 /* the knobs (fewer, Mood first, named by what they do; by number; ui.c AMB_AT puts them on the four pages: Scene,
- * Volume, Nature, Music). Gone: Time (always 100 %), Change (always Slow), Tape, Swim (always the orbit) */
+ * Volume, Nature, Music). Gone: Time (always 100 %), Change (the Key page's Drift), Tape, Swim (always the orbit) */
 enum { KK_MOOD, KK_ACT, KK_TONE, KK_SPACE, KK_NOTES, KK_DRONE, KK_AIR, KK_WATER, KK_AIRIS, KK_WATERIS, KK_ECHO, KK_DEPTH,
        KK_KOI, KK_KNOCK, KK_MELODY, KK_ARC };
 static const int16_t KP_KNOB[SC_NKNOB][4] = {   /* lo, hi, step, default; SPACE is the reverb (P_REVERB) */

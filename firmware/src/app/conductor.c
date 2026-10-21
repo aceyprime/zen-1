@@ -102,6 +102,8 @@ static struct {
     } echo[CD_NECHO];
     uint32_t heavy_ms;                     /* the last heavy note */
     float key_off;                         /* the drift's key, cents from the instrument's (0, +-500, +-700) */
+    float m_key;                           /* the mood's key and scale (cd_tune), for the Key page's Mood again */
+    int m_scale;
     int scale_cur, change_mode, dawns;     /* the drift's scale (the engine's for now), off/slow/often, dawns seen */
     int drone_wait;                        /* ms until the drone glides to a new key or scale (the engine's turn) */
     uint32_t light_since;                  /* Natural: since when the light's scale has differed (0: it does not) */
@@ -111,6 +113,24 @@ static struct {
     int heavy_n;
     uint32_t echoes;
 } cd;
+
+/* the Key page's key (proj.key 1..12: C..B): the scale's first note (white key 0, the drone's home) on it, the
+ * nearest way, whatever the mood, 本数 or the drift; 0: the mood's (and the drift's) */
+static float cd_koff(void)
+{
+    float c;
+    if (!proj.key || proj.key > 12u)
+        return cd.key_off;
+    c = (float)proj.key * 100.0f - 1000.0f - fm_key_cents(0);   /* (C4 is 900 cents under A4) */
+    return c - 1200.0f * fm_floorf(c / 1200.0f + 0.5f);
+}
+/* the Key page's scale (proj.scale 1..3: Yo, In, Min'yo), else s (the mood's, or the light's) */
+static int cd_scale_of(int s)
+{
+    static const int8_t S[3] = {SC_YO, SC_IN, SC_MINYO};
+    return proj.scale && proj.scale <= 3u ? S[proj.scale - 1u] : s;
+}
+static int cd_drift(void) { return proj.drift < 2u ? proj.drift ^ 1u : 2; }   /* 0 off, 1 slow, 2 often */
 
 /* a note's pitch: white key k of the scale (beyond the 16 keys, by octaves: five notes an octave) */
 static float cd_cents(int white)
@@ -124,7 +144,7 @@ static float cd_cents(int white)
         white += 5;
         o -= 1200.0f;
     }
-    return fm_key_cents(white) + o + cd.key_off;
+    return fm_key_cents(white) + o + cd_koff();
 }
 static int cd_in_chord(int white)
 {
@@ -332,6 +352,8 @@ static void cd_change_mode(int m) { cd.change_mode = m < 0 ? 0 : m > 2 ? 2 : m; 
 static void cd_tune(int scale, float key_off)
 {
     int j;
+    cd.m_scale = scale;
+    cd.m_key = key_off;
     if (scale < 0) {                          /* Natural: the key home (it drifts from there), the scale the
                                                 * light's (cd_light) */
         cd_change_mode(1);
@@ -343,6 +365,7 @@ static void cd_tune(int scale, float key_off)
         return;
     }
     cd_change_mode(0);
+    scale = cd_scale_of(scale);
     if (cd.key_off == key_off && cd.scale_cur == scale)
         return;
     cd.key_off = key_off;
@@ -357,9 +380,9 @@ static void cd_tune(int scale, float key_off)
 static void cd_dawn(void)
 {
     int j;
-    if (!cd.change_mode)
-        return;
-    if (cd.change_mode == 1 && ++cd.dawns % 3 != 0)
+    if (!cd.change_mode || !cd_drift() || (proj.key && proj.key <= 12u))
+        return;                               /* (no drift, or the Key page holds the key) */
+    if (cd_drift() == 1 && ++cd.dawns % 3 != 0)
         return;
     if (sc_frand() < 0.6f) {                  /* the key: a fourth or fifth, back home more often than away */
         static const float MOVE[4] = {700.0f, -500.0f, 500.0f, -700.0f};
@@ -391,7 +414,8 @@ static void cd_init(uint32_t seed)
     cd.lo = 3;
     cd.n = 10;
     cd.last_deg = -1;
-    cd.chord = (int)(seed % 5u);
+    cd.chord = proj.chord ? 0 : (int)(seed % 5u);
+    cd.m_scale = -1;
     cd.echo_ms = 6000u + seed % 2500u;
     cd_motif_new();
     cd.drone_lvl = 60.0f;
@@ -615,6 +639,7 @@ static int cd_note_key(int k, float pos, float strength, int dur_ms, int part, u
 static void cd_light(int scale)
 {
     int j;
+    scale = cd_scale_of(scale);
     if (!cd.change_mode || scale == cd.scale_cur) {
         cd.light_since = 0;
         cd.light_now = 0;
@@ -826,7 +851,7 @@ static void cd_step(uint32_t dt_ms)
     }
     cd.chord_left_ms -= (int)dt_ms;
     if (cd.chord_left_ms <= 0) {
-        cd.chord = (cd.chord + 1 + (int)(sc_rnd() % 3u)) % 5;
+        cd.chord = proj.chord ? 0 : (cd.chord + 1 + (int)(sc_rnd() % 3u)) % 5;   /* (Held: the home chord) */
         cd.chord_left_ms = 60000 + (int)(sc_rnd() % 120000u);
         cd_drone_set(1);
         cd_motif_shift();
@@ -834,6 +859,18 @@ static void cd_step(uint32_t dt_ms)
             cd_loops_shift();
         cd.echo_ms = 6000u + sc_rnd() % 2500u;
     }
+}
+
+/* the Key page turned: the mood's key and scale again through it, the drone gliding there, nothing old echoing */
+static void cd_retune(void)
+{
+    int j;
+    if (proj.chord)
+        cd.chord = 0;
+    cd_tune(cd.m_scale, cd.m_key);
+    for (j = 0; j < CD_NECHO; j++)
+        cd.echo[j].at = 0;
+    cd.drone_wait = 60;
 }
 
 static void cd_stop(void)

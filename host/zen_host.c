@@ -23,6 +23,7 @@
  *     WHAT: view parN (fumi.h P_*) dirty store_writes midi_out nvoices bend10 (cents x 10) keylevelK (x 100)
  *           custom peak_db_max peak_db_min jr_progs jr_erases save_seq mode style scnotes echoes voiceN landed
  *           kept regrows seed16 fade knobN dronetop dronelow (Hz, over every chord) scene soundN
+ *           tonic (the scale's first note now: 0 C .. 11 B) chord (0..4) scalenow (SC_*)
  *   reboot                       re-run boot from the simulated flash (persistence test)
  *   oldsound N                   scene slot N's saved knobs as from before its sounds changed (proj.sound[N] = 0)
  *   jrtear N                     a power cut on the Nth save-journal page program from now (half of it written,
@@ -778,6 +779,12 @@ static int expect(const char *what, const char *val)
         cd.chord = c0;
         got = (int)(what[5] == 't' ? top : low);
     }
+    else if (!strcmp(what, "tonic"))              /* white key 0, the drone's home: its note, 0 C .. 11 B */
+        got = ((int)lroundf((cd_cents(0) + 900.0f) / 100.0f) % 12 + 12) % 12;
+    else if (!strcmp(what, "chord"))
+        got = cd.chord;
+    else if (!strcmp(what, "scalenow"))
+        got = cd.scale_cur;
     else if (!strncmp(what, "knob", 4))           /* knobN: the current scene's saved knob N (0..7) */
         got = amb.kv[atoi(what + 4) % SC_NKNOB];
     else if (!strcmp(what, "jr_progs"))           /* page programs into the save journal */

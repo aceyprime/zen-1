@@ -19,7 +19,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fumi_patches import PATCHES  # noqa: E402
 
 PAD, FIRST = 2, 0x21
-SIZES = [("JP", 16), ("JPL", 48)]            # the small name under a label; the big one on the HOME screen
+SIZES = [("JP", 16, 4), ("JPL", 48, 2)]      # the small name under a label; the big one on the HOME screen (bits a pixel:
+                                             # the big one in 4 shades, half the flash, the same to the eye at its size;
+                                             # drawn by ui.c's cv_text4, not gfx.c's cv_text)
 CANDIDATES = ["/Applications/Ableton Live 12 Standard.app/Contents/App-Resources/Fonts/NotoSansCJKjp-Bold.otf",
               "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc", "/usr/share/fonts/noto-cjk/NotoSansCJK-Bold.ttc"]
 
@@ -47,7 +49,7 @@ def main(out, font_arg=None):
          "#pragma once", "#include <stdint.h>",
          "/* " + " ".join(f"{chr(FIRST + i)}={ch}" for i, ch in enumerate(chars)) + " */"]
     total = 0
-    for name, px_size in SIZES:
+    for name, px_size, bits in SIZES:
         font = ImageFont.truetype(path, px_size)
         asc, desc = font.getmetrics()
         top = min(font.getbbox(ch)[1] for ch in chars)
@@ -62,10 +64,16 @@ def main(out, font_arg=None):
             img = img.crop((0, top, bw, top + h))
             px = [min(15, (v + 8) // 17) for v in img.tobytes()]
             offs.append(len(data))
+            if bits == 2:
+                px = [(q * 3 + 7) // 15 for q in px]    # (from the 16 shades: the same as from them in the header)
             for y in range(h):
-                row = px[y * bw:(y + 1) * bw] + [0]
-                for x in range(0, bw, 2):
-                    data.append((row[x] << 4) | row[x + 1])
+                row = px[y * bw:(y + 1) * bw] + [0, 0, 0]
+                if bits == 2:
+                    for x in range(0, bw, 4):
+                        data.append((row[x] << 6) | (row[x + 1] << 4) | (row[x + 2] << 2) | row[x + 3])
+                else:
+                    for x in range(0, bw, 2):
+                        data.append((row[x] << 4) | row[x + 1])
             advs.append(adv)
             bws.append(bw)
         assert len(data) < 65536 and h < 256 and max(bws) < 256

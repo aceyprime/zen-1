@@ -23,13 +23,15 @@
 typedef struct {
     uint32_t magic, format;
     int16_t par[P_NPARAMS];              /* fumi.h P_* */
-    uint8_t leds;                        /* lights: 0 off, 1 keys and the buttons' glow, 2 keys only */
+    uint8_t leds;                        /* a scene's lights (ENV): 0 off, 1 on, 2 auto (off after 30 s untouched) */
     uint8_t mode;                        /* 0 the instrument (FuMi), 1 ambient (a scene) */
     uint8_t scene;                       /* which scene */
     uint8_t style;                       /* 0 painterly, 1 pixel art */
     uint8_t sound[4];                    /* each scene's sounds' version its knobs were saved with (scene.h) */
     uint8_t frogs;                       /* (Hotaru's frogs, recorded or synthesized; unused now) */
-    uint8_t rsv[7];                      /* room to grow: an older, shorter project loads (zeros here) */
+    uint8_t key, scale, chord, drift;    /* the scenes' Key page, every mood and scene (0 each: as the mood has it):
+                                          * key 1..12 C..B; scale 1..3 Yo, In, Min'yo; chord 1 held; drift 1 off, 2 often */
+    uint8_t rsv[3];                      /* room to grow: an older, shorter project loads (zeros here) */
     uint8_t mood[4];                     /* each scene's mood (by its slot; 0 Natural) */
     uint8_t tweak[4];                    /* bit m: scene's mood m has the player's tweaks (mk), else as it was made */
     uint8_t mk[4][5][16];                /* each scene's moods' knobs as the player left them (each 0..255) */

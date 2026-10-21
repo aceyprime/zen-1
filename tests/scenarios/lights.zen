@@ -1,0 +1,46 @@
+# the panel's lights (ENV): On, then Auto (all out after 30 s untouched, the sleep timer's SEQ too; back at a touch),
+# Off (none, a press does not bring them back), On again (they stay); the koto keeps its own lights whatever the setting
+wait 800
+expect ledFX 1
+expect ledENV 1
+tap ENV
+wait 300
+expect ledFX 1
+wait 29000
+expect ledFX 1
+wait 1500
+expect ledFX 0
+expect ledSEQ 0
+tap SEQ
+wait 100
+expect ledSEQ 2
+wait 29000
+expect ledSEQ 2
+wait 1500
+expect ledSEQ 0
+tap HOME
+wait 300
+expect ledFX 1
+expect ledSEQ 2
+tap ENV
+wait 300
+expect ledFX 0
+expect ledSEQ 0
+tap PLAY
+wait 3000
+expect ledFX 0
+tap ENV
+wait 300
+expect ledFX 1
+expect ledSEQ 2
+wait 31000
+expect ledFX 1
+tap ENV
+tap ENV
+wait 300
+expect ledFX 0
+press HOME
+wait 1500
+release HOME
+wait 500
+expect ledHOME 2

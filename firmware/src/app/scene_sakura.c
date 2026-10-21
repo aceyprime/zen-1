@@ -47,7 +47,7 @@ static const uint8_t SK_TONE_SLOT[5] = {FM_P_KOTO_WARM, FM_P_KOTO, FM_P_KOTO_II,
 static const char *const SK_TONE_NAME[5] = {"Warm", "Koto", "Koto II", "Pluck", "Ring"};
 
 /* the knobs (fewer, Mood first, named by what they do; by number; ui.c AMB_AT puts them on the four pages: Scene,
- * Volume, Nature, Music). Gone: Time (always 100 %), Change (always Slow), Tape */
+ * Volume, Nature, Music). Gone: Time (always 100 %), Change (the Key page's Drift), Tape */
 enum { SKK_MOOD, SKK_ACT, SKK_TONE, SKK_SPACE, SKK_NOTES, SKK_DRONE, SKK_WIND, SKK_STREAM, SKK_AIR, SKK_WATER, SKK_ECHO,
        SKK_DEPTH, SKK_HEAVY, SKK_GUSTS, SKK_MELODY, SKK_ARC };
 #define SK_SOUND 5                          /* Sakura's sounds' version (scene_t.sound): 1, defaults set by ear;

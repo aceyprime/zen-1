@@ -21,7 +21,8 @@ tap FX
 tap FX
 spin K1 -40
 expect knob10 0
-# Nature: Air Type and Water Type, under their levels
+# Nature: Air Type and Water Type, under their levels (Music, Key, round to Scene, Volume, Nature)
+tap FX
 tap FX
 tap FX
 tap FX

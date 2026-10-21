@@ -57,7 +57,7 @@ enum { HT_SKY = 0, HT_STAR = 64, HT_HALO = 68, HT_MOON = 72, HT_HILL = 76, HT_GR
 #define HT_KEY_LIFT 0.3f
 #define HT_NCLOUD 4                             /* (the first far off, low and faint) */
 /* the knobs (fewer, Mood first, named by what they do; by number; ui.c AMB_AT puts them on the four pages: Scene,
- * Volume, Nature, Music). Gone: Time (always 100 %), Change (always Slow), Tape, Sync (the moods set it: ht.sync) */
+ * Volume, Nature, Music). Gone: Time (always 100 %), Change (the Key page's Drift), Tape, Sync (the moods set it: ht.sync) */
 enum { HK_MOOD, HK_ACT, HK_TONE, HK_SPACE, HK_NOTES, HK_DRONE, HK_AIR, HK_FROGS, HK_AIRIS, HK_WATERIS, HK_ECHO, HK_DEPTH,
        HK_OWL, HK_WEATHER, HK_MELODY, HK_ARC };
 static const int16_t HT_KNOB[SC_NKNOB][4] = {   /* lo, hi, step, default; SPACE is the reverb (P_REVERB) */

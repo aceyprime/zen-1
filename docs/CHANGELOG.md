@@ -4,6 +4,16 @@ Identities are `FM-1_6` + major, minor and patch as two digits each; the FM-1 re
 (`python3 tools/fm1_install.py --info`). FuMi-1's own releases, up to 1.0.3 where ZEN-1 began, are in
 [its changelog](https://github.com/cartesive/fumi-1/blob/main/docs/CHANGELOG.md).
 
+## 1.2 — `FM-1_6010200`
+
+- **The panel's lights (ENV):** On, Auto or Off, kept across power-offs. Auto puts every light out after 30 seconds
+  with nothing touched and brings them back at a touch; Off keeps the panel dark, for a dark room (everything still
+  works). The status card (tap HOME) shows the setting. The koto keeps its own lights. Thanks to ghostly606-gmcg for asking.
+- **A Key page** (FX's fifth): Key (the mood's, or C to B), Scale (the mood's, or Yo, In or Min'yo), Chord (Moving,
+  or Held on the home chord) and Drift (Off, Slow or Often), one setting for every mood and scene, to play along in
+  your key. The drone and the notes glide to a new key or scale. Thanks to anubispop for asking.
+- **The koto's big instrument names** take half the flash (4 shades instead of 16; the same to the eye).
+
 ## 1.1 — `FM-1_6010100`
 
 - **Sakura:** the clouds drift smoothly, a pixel at a time (slow ones had flickered back and forth as they went);

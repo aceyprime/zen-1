@@ -12,7 +12,7 @@ static const char *const SC_WATER_NAME[FM_NWATER] = {"Bubbles", "Brook", "White"
                                                      "Soft bubble"};
 
 #define SC_NKNOB 20                         /* (the project keeps 20 a scene uses the first 16: four pages) */
-#define SC_NPAGE 4                          /* (fewer settings: the scene's, Volume, Texture, Nature) */
+#define SC_NPAGE 5                          /* (the scene's, Volume, Nature, Music; and Key, every scene's: ui.c) */
 #define SC_NUSED 16
 #define SC_MOOD_NATURAL 0                   /* the Mood knob: 0 Natural (the scene's own day or night, the
                                              * default), then a scene's own, each holding its time. Every mood keeps the player's tweaks (ui.c amb_mood_*) */

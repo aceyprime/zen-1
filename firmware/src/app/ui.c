@@ -413,6 +413,31 @@ static void cv_round(int32_t x, int32_t y, int32_t w, int32_t h, int32_t r, uint
     }
 }
 
+/* the big kanji (zen_kanji.h FONT_JPL): 4 shades, 2 bits a pixel (half the flash of gfx.c's 16, the same to the
+ * eye at 48 px), blended over the canvas as cv_text does */
+static void cv_text4(int32_t x, int32_t y, const felucca_font_t *f, const char *s, uint16_t c)
+{
+    uint32_t r = c >> 11, g = (c >> 5) & 63u, b = c & 31u;
+    for (; *s; s++) {
+        uint32_t gi = glyph(f, (uint8_t)*s), w = f->bw[gi], bpr = (w + 3u) / 4u, gx, gy;
+        const uint8_t *gd = f->data + f->off[gi];
+        for (gy = 0; gy < f->h; gy++)
+            for (gx = 0; gx < w; gx++) {
+                uint32_t a = gd[gy * bpr + gx / 4u] >> (6u - 2u * (gx & 3u)) & 3u, bg;
+                int32_t px = x - f->pad + (int32_t)gx, py = y + (int32_t)gy + cv_oy;
+                uint16_t *d;
+                if (!a || (uint32_t)px >= cv_w || py < cv_y0 || py >= cv_y1)
+                    continue;
+                d = &cv_px[(uint32_t)py * cv_w + (uint32_t)px];
+                bg = swap16(*d);
+                *d = swap16((uint16_t)(((r * a + (bg >> 11) * (3u - a)) / 3u) << 11 |
+                                       ((g * a + ((bg >> 5) & 63u) * (3u - a)) / 3u) << 5 |
+                                       (b * a + (bg & 31u) * (3u - a)) / 3u));
+            }
+        x += f->adv[gi];
+    }
+}
+
 static void text_c(int32_t cx, int32_t y, const felucca_font_t *f, const char *s, uint16_t c)
 {
     cv_text(cx - text_w(f, s) / 2, y, f, s, c);
@@ -609,7 +634,7 @@ static void draw_main(void)
                                 : text_w(&FONT_M, name) <= room ? &FONT_M : &FONT_B;
         cv_text(12, 64 - f->h / 2, f, name, fm_patch_custom ? K_KOTO : K_TEXT);
         if (jw)
-            cv_text(240 - 12 - jw, 64 - FONT_JPL.h / 2, &FONT_JPL, ja, K_TEXT);
+            cv_text4(240 - 12 - jw, 64 - FONT_JPL.h / 2, &FONT_JPL, ja, K_TEXT);
     }
     draw_keys(98, 22);
     for (i = 0; i < FM_NWHITE; i++)              /* the degree under each key, the tonics' row marked */
@@ -684,7 +709,7 @@ static void leds(void)
         b |= 1u << B_GLO;
     if (proj.par[P_BLACK])
         b |= 1u << B_SEQ;
-    if (proj.leds) {
+    {
         for (i = 0; i < FM_NWHITE; i++)
             if (fm_key_level[i] > 0.15f || (i % 5) == 0)   /* the tonics: landmarks, always lit */
                 k |= 1u << WHITE_K[i];
@@ -692,7 +717,7 @@ static void leds(void)
             if (fm_key_level[FM_NWHITE + i] > 0.15f)
                 k |= 1u << BLACK_K[i];
     }
-    plat_glow(proj.leds == 1);
+    plat_glow(1);
     plat_leds(b, k);
 }
 
@@ -721,8 +746,8 @@ static void autosave(void)
 /* Ambient mode: a scene fills the screen (render8.c) and plays itself. The keys and knobs are the scene's
  *: PRESETS picks the scene (the one the next power-on starts in: saved 3 s after; never the load test),
  * SELECT turns Activity and ALGORITHM the Mood from any page (the key and scale come with the mood), FX the next
- * page of four knobs and SEL the one before, GLO switches painterly / pixel art, PLAY grows a new picture, SEQ the
- * sleep timer, SAVE saves (held: reset), HOME held goes back to the instrument. Only the buttons with a use glow dim (amb_leds). OCT- + OCT+ held 5 s is update
+ * page of four knobs and SEL the one before, GLO switches painterly / pixel art, ENV the panel's lights (on, auto,
+ * off), PLAY grows a new picture, SEQ the sleep timer, SAVE saves (held: reset), HOME held goes back to the instrument. Only the buttons with a use glow dim (amb_leds). OCT- + OCT+ held 5 s is update
  * mode, as everywhere (main_fm1.c). A scene's knobs are kept in the project (proj.knob), so they are as they were
  * left, after a reboot too.
  *
@@ -788,27 +813,32 @@ static struct {
 static int amb_index(void) { return proj.scene % NSCENES; }
 static int amb_slot(void) { return SCENES[amb_index()]->slot & 3; }   /* the scene's own place in the project */
 
-/* a scene's panel lights (no flash on the keys): the buttons with a use dim (FX, SEL, SEQ, GLO, PLAY, SAVE, HOME, OCT-
- * and OCT+; SEQ bright while the sleep timer runs), the
+/* a scene's panel lights (no flash on the keys): the buttons with a use dim (FX, SEL, ENV, SEQ, GLO, PLAY, SAVE, HOME,
+ * OCT- and OCT+; SEQ bright while the sleep timer runs), the
  * rest dark; all the keys dim (every white key sounds right in the scene's scale; each scene gives the black keys a
- * use) */
+ * use). ENV's setting: all of them, none, or Auto: none once nothing has been touched for 30 s, back at a touch */
+#define AMB_LEDS_AUTO_MS 30000u
+static const char *const AMB_LEDS_NAME[3] = {"OFF", "ON", "AUTO"};
 static int amb_leds(void)
 {
     uint32_t b = 0, k = 0, db = 0, dk = 0, i;
     if (!amb.sc)
         return 0;
-    db = (1u << B_FX) | (1u << B_SEL) | (1u << B_SEQ) | (1u << B_GLO) | (amb.sc->regrow ? 1u << B_PLAY : 0u) | (1u << B_SAVE) | (1u << B_HOME) |
+    if (!proj.leds || (proj.leds == 2 && plat_ms() - amb.act_t >= AMB_LEDS_AUTO_MS)) {
+        plat_glow(0);
+        plat_leds(0, 0);
+        return 1;
+    }
+    db = (1u << B_FX) | (1u << B_SEL) | (1u << B_ENV) | (1u << B_SEQ) | (1u << B_GLO) | (amb.sc->regrow ? 1u << B_PLAY : 0u) | (1u << B_SAVE) | (1u << B_HOME) |
          (1u << B_OCTDN) | (1u << B_OCTUP) | (ZN_HUD ? 1u << B_REC : 0u);   /* (REC: the testing builds'
                                                        * readout) */
-    if (proj.leds) {
-        for (i = 0; i < FM_NWHITE; i++)
-            dk |= 1u << WHITE_K[i];
-        for (i = 0; i < FM_NBLACK; i++)
-            dk |= 1u << BLACK_K[i];
-    }
+    for (i = 0; i < FM_NWHITE; i++)
+        dk |= 1u << WHITE_K[i];
+    for (i = 0; i < FM_NBLACK; i++)
+        dk |= 1u << BLACK_K[i];
     if (amb.sleep)
         b |= 1u << B_SEQ;                          /* (the sleep timer running: bright) */
-    plat_leds_dim(proj.leds == 1 ? db & ~b : 0u, dk & ~k);
+    plat_leds_dim(db & ~b, dk & ~k);
     plat_leds(b, k);
     return 1;
 }
@@ -894,8 +924,33 @@ static void amb_reset_tick(uint32_t now)           /* stayed on Reset 2 s: the m
     amb.touched = 0;
     amb.touch_until = now + 3000u;
 }
+/* the Key page (knobs 16..19): one setting for every mood and scene, each as the mood has it at first (Mood,
+ * Moving, Slow): Key a fixed key (C..B), Scale one of the three, Chord held on the home chord, Drift the
+ * key's own moves in Natural (off, every third dawn, every dawn). Kept in the project (proj.key ..) */
+static uint8_t *const AMB_KEYP[4] = {&proj.key, &proj.scale, &proj.chord, &proj.drift};
+static const uint8_t AMB_KEYN[4] = {13, 4, 2, 3}, AMB_KEYO[4] = {0, 13, 17, 19};
+static const char *const AMB_KEYS[] = {"Mood", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
+                                       "Mood", "Yo", "In", "Min'yo", "Moving", "Held", "Off", "Slow", "Often",
+                                       "Key", "Scale", "Chord", "Drift"};
+static int amb_key_val(int j)                      /* (Drift kept as 0 slow, 1 off, 2 often: zero as made) */
+{
+    int v = *AMB_KEYP[j];
+    v = j == 3 && v < 2 ? v ^ 1 : v;
+    return v < AMB_KEYN[j] ? v : 0;
+}
+static void amb_key_turn(int j, int32_t e)
+{
+    int v = (amb_key_val(j) + (int)e % AMB_KEYN[j] + AMB_KEYN[j]) % AMB_KEYN[j];   /* (round, as every list) */
+    *AMB_KEYP[j] = (uint8_t)(j == 3 && v < 2 ? v ^ 1 : v);
+    cd_retune();
+}
 static void amb_knob_text(int i, char *n, char *v) /* a knob's name and value, the Mood's Reset in its place */
 {
+    if (i >= SC_NUSED) {
+        copy_str(n, AMB_KEYS[22 + i - SC_NUSED], 11);
+        copy_str(v, AMB_KEYS[AMB_KEYO[i - SC_NUSED] + amb_key_val(i - SC_NUSED)], 11);
+        return;
+    }
     amb.sc->knob_text(i, n, v);
     if (i == 0 && amb.reset_m >= 0) {
         copy_str(n, "Reset", 11);
@@ -1136,18 +1191,18 @@ static void amb_fade_tick(uint32_t dt)
 
 /* the knobs where the pages show them (page * 4 + column -> the scene's knob): Scene (Mood, Activity, Instrument,
  * Space), Volume (Notes, Drone, Air, Water), Nature (the scene's own two, then Air Type and Water Type, each under
- * its level), Music (Echo, Warmth, Phrases, Tide). The knobs keep their numbers (the project and the moods hold
- * them by number): only where they show is set here */
+ * its level), Music (Echo, Warmth, Phrases, Tide), then Key (16..19: the project's own, amb_key_turn). The knobs keep
+ * their numbers (the project and the moods hold them by number): only where they show is set here */
 static const uint8_t AMB_AT[SC_NUSED] = {0, 1, 2, 3, 4, 5, 6, 7, 12, 13, 8, 9, 10, 11, 14, 15};
 static int amb_knob_at(int p)
 {
-    int n = AMB_AT[p];
+    int n = p < SC_NUSED ? AMB_AT[p] : p;          /* (the Key page: knobs 16..19, the project's own) */
     return amb.sc->own_swap && (n == 12 || n == 13) ? n ^ 1 : n;
 }
 static int amb_knob_pos(int n)
 {
     int p;
-    for (p = 0; p < SC_NUSED; p++)
+    for (p = 0; p < SC_NPAGE * 4; p++)
         if (amb_knob_at(p) == n)
             return p;
     return 0;
@@ -1163,7 +1218,9 @@ static void amb_page(int p)                         /* a page of knobs, its bar 
 /* a scene's knob n turned e (enc: its encoder, for the speed-up; < 0 none): its page shown, it lit for 3 s */
 static void amb_turn(int n, int enc, int32_t e)
 {
-    if (n == 0)
+    if (n >= SC_NUSED)
+        amb_key_turn(n - SC_NUSED, e);             /* (the Key page: lists, one a detent, round) */
+    else if (n == 0)
         amb_mood_turn(e);                          /* (the Mood: one a detent, round) */
     else {
         int16_t was[SC_NUSED];
@@ -1221,6 +1278,11 @@ static void amb_button(int b)                      /* on release, unless the pre
         r8_set_style(proj.style);
         amb.sc->background();
         say("STYLE", proj.style ? "PIXEL ART" : "PAINTERLY");
+        break;
+    case B_ENV:                                    /* the panel's lights: on, auto (off after 30 s untouched), off */
+        proj.leds = (uint8_t)((proj.leds + 1u) % 3u);
+        mark_dirty();
+        say("LIGHTS", AMB_LEDS_NAME[proj.leds]);
         break;
     case B_SAVE: amb_quiet_save(1); break;
     case B_HOME:                                   /* a tap (held: the instrument): the status card for 3 s */
@@ -1341,6 +1403,7 @@ static void amb_input(void)
         amb.pre_to = (int8_t)((from + (e > 0 ? 1 : NSCENES - 1)) % NSCENES);
         amb.pre_at = plat_ms();
         amb.welcome_until = 0;
+        amb.act_t = plat_ms();
         say("SCENE", SCENES[amb.pre_to]->name);
     }
     if (amb.pre_to >= 0 && plat_ms() - amb.pre_at >= AMB_PRESET_MS) {
@@ -1577,6 +1640,11 @@ static void amb_overlay(int32_t sy, int32_t sh)
         } else
             copy_str(t, "--", 3);
         cv_text(52, 187, &FONT_B, t, pct >= 0 && pct <= 15 ? K_KOTO : K_TEXT);
+        copy_str(t, "lights ", 8);                 /* (ENV's setting) */
+        copy_str(t + 7, AMB_LEDS_NAME[proj.leds], 5);
+        for (int c = 7; t[c]; c++)
+            t[c] = (char)(t[c] | 0x20);            /* (in small letters, as the sleep line) */
+        cv_text(14, 209, &FONT_XS, t, K_DIM);
         if (amb.sleep) {                           /* the sleep timer's time left: h:mm, under an hour m:ss */
             int32_t ms = (int32_t)(amb.sleep_end - plat_ms());
             uint32_t s = ms > 0 ? (uint32_t)ms / 1000u : 0u, a = s >= 3600u ? s / 3600u : s / 60u,
@@ -1590,7 +1658,7 @@ static void amb_overlay(int32_t sy, int32_t sh)
             t[e++] = (char)('0' + b / 10u);
             t[e++] = (char)('0' + b % 10u);
             t[e] = 0;
-            cv_text(14, 214, &FONT_XS, t, K_DIM);
+            cv_text(14, 222, &FONT_XS, t, K_DIM);
         }
 #if ZN_HUD
         else {   /* (testing builds: the reading itself, to calibrate the scale) */
@@ -1601,7 +1669,7 @@ static void amb_overlay(int32_t sy, int32_t sh)
                 itoa_u((uint32_t)raw, r + 4);
             else
                 copy_str(r + 4, "-", 2);
-            cv_text(14, 214, &FONT_XS, r, K_DIM);
+            cv_text(14, 222, &FONT_XS, r, K_DIM);
         }
 #endif
         text_c(176, 187, &FONT_B, amb.sc->name, K_TEXT);
@@ -1613,11 +1681,11 @@ static void amb_overlay(int32_t sy, int32_t sh)
         int i;
         cv_round(4, 178, 232, 58, 6, K_PANEL);
         for (i = 0; i < SC_NPAGE; i++) {             /* the pages' tabs over the bar, the one shown lit */
-            static const char *const PAGE[SC_NPAGE] = {0, "Volume", "Nature", "Music"};
+            static const char *const PAGE[SC_NPAGE] = {0, "Volume", "Nature", "Music", "Key"};
             const char *pn = i ? PAGE[i] : amb.sc->name;
             int on = i == amb.page;
-            cv_round(4 + i * 58, 161, 56, 16, 4, on ? K_PANEL : K_BG);
-            text_c(4 + i * 58 + 28, 162, &FONT_XS, pn, on ? K_KOTO : K_DIM);
+            cv_round(4 + i * 47, 161, 45, 16, 4, on ? K_PANEL : K_BG);
+            text_c(4 + i * 47 + 22, 162, &FONT_XS, pn, on ? K_KOTO : K_DIM);
         }
         for (i = 0; i < 4; i++) {
             char n[12], v[12];

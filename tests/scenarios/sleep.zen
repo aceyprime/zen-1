@@ -8,7 +8,7 @@ expect ledEDIT 0
 tap SEL
 expect page 0
 tap SEL
-expect page 3
+expect page 4
 tap FX
 expect page 0
 wait 4000

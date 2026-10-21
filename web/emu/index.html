@@ -116,13 +116,14 @@ kbd { font: 600 .85em ui-monospace, Menlo, monospace; background: var(--card); b
       <li><b>ALGORITHM</b>: the mood (the time of day and the feel).</li>
       <li><b>SELECT</b>: Activity, how busy the scene is (petals, koi food or fireflies, and so how many notes).</li>
       <li><b>KNOB 1–4</b>: the four settings on the page that's showing.</li>
-      <li><b>FX</b>: show the knob pages and step through them: Scene, Volume, Nature, Music.
+      <li><b>FX</b>: show the knob pages and step through them: Scene, Volume, Nature, Music, Key.
         <b>SEL</b> goes back a page.</li>
       <li><b>GLO</b>: painted look or pixel art.</li>
+      <li><b>ENV</b>: the panel's lights: on, auto (out after 30 s untouched) or off.</li>
       <li><b>PLAY</b>: a new picture (a new tree, pond, or field and moon).</li>
       <li><b>HOME</b>
         <ul>
-          <li>Tap: the battery, the scene and the mood.</li>
+          <li>Tap: the battery, the lights, the scene and the mood.</li>
           <li>Hold: the koto instrument (below); hold again to come back.</li>
         </ul></li>
       <li><b>SEQ</b>: the sleep timer, from 15 minutes to 8 hours.</li>
@@ -215,7 +216,7 @@ kbd { font: 600 .85em ui-monospace, Menlo, monospace; background: var(--card); b
         <tr><th scope="row"><kbd>/</kbd></th><td>ARP</td><td>Not used</td><td>Trill on / off</td></tr>
       </tbody>
     </table></div>
-    <p>Every other control (FX, SEL, GLO, PLAY, SEQ, SAVE and the knobs) is on the panel: click it, or reach it with
+    <p>Every other control (FX, SEL, ENV, GLO, PLAY, SEQ, SAVE and the knobs) is on the panel: click it, or reach it with
       <kbd>Tab</kbd>.</p>
   </section>
 
@@ -334,7 +335,7 @@ function hit(c, cls) {
 }
 // what each control does, on hover, in a scene and in the instrument (the help below says the same)
 const TIP = { FX: "Scene: show the knob pages, then the next page. Instrument: the sound page",
-  SEL: "Scene: the page before. Instrument: tap equal / just tuning, hold the tuning page", ENV: "Not used",
+  SEL: "Scene: the page before. Instrument: tap equal / just tuning, hold the tuning page", ENV: "Scene: the panel's lights: on, auto (out after 30 s untouched), off",
   LFO: "Instrument: vibrato on / off", EDIT: "Instrument: the bend page", GLO: "Scene: painted look / pixel art. Instrument: mono / poly",
   HOME: "Tap: the battery, scene and mood (scene) or the home page (instrument). Hold: switch between scene and instrument",
   SAVE: "Tap: save now. Hold 3 s: reset everything", ARP: "Instrument: trill on / off",
