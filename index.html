@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZEN-1</title>
+<meta name="description" content="ZEN-1: ambient custom firmware for the M-VAVE FM-1. Living scenes whose every movement is the music: cherry blossoms, a koi pond, fireflies under a real moon.">
+<style>
+:root { --ground: #faf4e8; --ink: #3b2f28; --muted: #6e5c4b; --rule: #e6dccb; --accent: #b84a1e; --card: #fffaf1; color-scheme: light; }
+@media (prefers-color-scheme: dark) {
+  :root { --ground: #1c1814; --ink: #f2e8d8; --muted: #b3a28e; --rule: #3a322a; --accent: #f08a6a; --card: #26201b; color-scheme: dark; }
+}
+body { background: var(--ground); color: var(--ink); margin: 0; padding: 48px 16px 64px; font: 400 17px/1.6 -apple-system, "Helvetica Neue", Arial, sans-serif; }
+main { max-width: 46rem; margin: 0 auto; }
+h1 { font-size: 3rem; line-height: 1; margin: 0 0 .4rem; color: var(--accent); }
+h1 small { font-size: 1.2rem; color: var(--muted); margin-left: .5rem; }
+h2 { font-size: 1.45rem; margin: 2.4rem 0 .6rem; }
+h3 { font-size: 1.1rem; margin: 1.4rem 0 .3rem; }
+.lede { font-size: 1.15rem; margin: 0 0 1.6rem; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin: 0 0 1.8rem; }
+.gallery figure { margin: 0; }
+.gallery img { width: 100%; height: auto; border-radius: 12px; image-rendering: pixelated; display: block; box-shadow: 0 1px 0 var(--rule), 0 6px 18px rgba(72, 57, 47, .12); }
+.gallery figcaption { color: var(--muted); font-size: .8rem; margin-top: 4px; }
+.status { border: 1px solid var(--rule); background: var(--card); border-radius: 14px; padding: 12px 16px; margin: 0 0 1.6rem; }
+.ways { display: grid; gap: 12px; margin: 0 0 1rem; }
+.ways a { display: block; text-decoration: none; color: var(--ink); background: var(--card); border: 1px solid var(--rule); border-radius: 14px; padding: 14px 18px; }
+.ways a:hover, .ways a:focus-visible { border-color: var(--accent); }
+.ways strong { font-size: 1.25rem; color: var(--accent); display: block; }
+.ways span { color: var(--muted); font-size: .95rem; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.card { background: var(--card); border: 1px solid var(--rule); border-radius: 14px; padding: 12px 16px; }
+.card h3 { margin-top: .2rem; color: var(--accent); }
+ul { padding-left: 1.2rem; }
+li { margin: .25rem 0; }
+li > ul { margin: .2rem 0 .4rem; }
+.card ul { margin: .4rem 0 0; }
+.status ul { margin: .4rem 0 0; }
+p.small { color: var(--muted); font-size: .9rem; }
+a { color: var(--accent); }
+code { font-size: .9em; }
+:focus-visible { outline: 3px solid #1f6fd1; outline-offset: 2px; }
+@media (prefers-color-scheme: dark) { :focus-visible { outline-color: #79adff; } }
+footer { max-width: 46rem; margin: 2.4rem auto 0; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<main>
+<h1>ZEN-1 <small lang="ja">禅</small></h1>
+<p class="lede">Ambient firmware for the M-VAVE FM-1 that turns it into a small living window. A cherry tree drops
+petals on a river, koi circle a pond, fireflies blink over a summer stream under a real moon, and every movement you
+see is a note you hear.</p>
+<p>Switch it on, set it down and let it play: soft, slow and never quite the same. It is made for listening while you
+read, work, wind down or fall asleep. When you want to, reach in: the keys play along with the scene, and the knobs
+shape every part of it.</p>
+
+<div class="gallery">
+  <figure><img src="img/gallery/sakura-morning.png" width="240" height="240" alt="Sakura in the morning: a cherry tree over a misty stream, cherries along its stone-walled far bank"><figcaption>Sakura · Morning</figcaption></figure>
+  <figure><img src="img/gallery/sakura-afternoon.png" width="240" height="240" alt="Sakura in the afternoon sun, the far bank mirrored in the stream"><figcaption>Sakura · Afternoon</figcaption></figure>
+  <figure><img src="img/gallery/sakura-golden.png" width="240" height="240" alt="Sakura at golden hour, the blossoms warm"><figcaption>Sakura · Golden Hour</figcaption></figure>
+  <figure><img src="img/gallery/sakura-night.png" width="240" height="240" alt="Sakura at night: the tree lit up, lanterns along the far bank, their light on the river"><figcaption>Sakura · Night</figcaption></figure>
+  <figure><img src="img/gallery/sakura-pixel.png" width="240" height="240" alt="Sakura in the pixel-art style"><figcaption>Sakura · pixel art</figcaption></figure>
+  <figure><img src="img/gallery/koi-day.png" width="240" height="240" alt="The koi pond by day, seen from above: koi among lily pads in a ring of stones"><figcaption>Koi · Natural</figcaption></figure>
+  <figure><img src="img/gallery/koi-feeding.png" width="240" height="240" alt="The koi pond at feeding time, the koi near the surface"><figcaption>Koi · Feeding</figcaption></figure>
+  <figure><img src="img/gallery/koi-still.png" width="240" height="240" alt="The still pond, the koi deeper and slower"><figcaption>Koi · Still Pond</figcaption></figure>
+  <figure><img src="img/gallery/koi-rain.png" width="240" height="240" alt="Rain on the koi pond, rings where the drops land"><figcaption>Koi · Rain</figcaption></figure>
+  <figure><img src="img/gallery/koi-night.png" width="240" height="240" alt="The koi pond at night, a stone lantern lit and the moon on the water"><figcaption>Koi · Night</figcaption></figure>
+  <figure><img src="img/gallery/koi-pixel.png" width="240" height="240" alt="The koi pond in the pixel-art style"><figcaption>Koi · pixel art</figcaption></figure>
+  <figure><img src="img/gallery/hotaru-dusk.png" width="240" height="240" alt="Fireflies over a stream at dusk"><figcaption>Hotaru · Dusk</figcaption></figure>
+  <figure><img src="img/gallery/hotaru-festival.png" width="240" height="240" alt="A full moon rising over the firefly stream"><figcaption>Hotaru · Festival</figcaption></figure>
+  <figure><img src="img/gallery/hotaru-quiet.png" width="240" height="240" alt="A quiet night over the firefly stream"><figcaption>Hotaru · Quiet Night</figcaption></figure>
+  <figure><img src="img/gallery/hotaru-deep.png" width="240" height="240" alt="Deep night: the Milky Way and many stars"><figcaption>Hotaru · Deep Night</figcaption></figure>
+  <figure><img src="img/gallery/hotaru-rain.png" width="240" height="240" alt="Rain over the firefly stream, rings on the water"><figcaption>Hotaru · Rain</figcaption></figure>
+  <figure><img src="img/gallery/hotaru-mist.png" width="240" height="240" alt="Mist over the firefly stream, the moon hazy"><figcaption>Hotaru · Mist</figcaption></figure>
+</div>
+
+<div class="status"><strong>Version 1.2.</strong>
+<ul>
+<li>It installs and uninstalls the way Felucca, X0X, FoMni and FuMi-1 do, and the installer can put M-VAVE's own
+firmware back.</li>
+<li>Your FM-1 should be on M-VAVE's V15 before any custom firmware.</li>
+<li>Installing is at your own risk: read the notes on the install page first.</li>
+</ul></div>
+<nav class="ways" aria-label="Get ZEN-1">
+  <a href="install/"><strong>Install</strong><span>From Chrome or Edge, with the FM-1 connected by USB. Nothing to install on the computer.</span></a>
+  <a href="emu/"><strong>Try it in the browser</strong><span>The very code the FM-1 runs, with sound: every scene, every mood.</span></a>
+  <a href="guide/"><strong>The guide</strong><span>Every control, every knob, and everything hiding in each scene.</span></a>
+  <a href="firmware/zen-1-1.2.fwsc"><strong>Download zen-1-1.2.fwsc</strong><span>For the command-line installer: <code>python3 tools/fm1_install.py zen-1-1.2.fwsc</code></span></a>
+  <a href="https://github.com/aceyprime/zen-1"><strong>Source</strong><span>GPL-3.0. Built on FuMi-1, FoMni and Felucca; the FM engine is Dexed's msfa.</span></a>
+</nav>
+
+<h2>Just listen, or make it yours</h2>
+<div class="cards">
+  <div class="card"><h3>Made for listening</h3>There is nothing to do. Pick a scene and it plays on its own for as long
+  as you like, its music unhurried and gentle, the light slowly turning from morning to night. A soft drone breathes
+  underneath, notes come and go like rain, and every few minutes the music pauses for a breath. It is calm on
+  purpose: no beats, no sudden sounds, no flashing lights, nothing that jumps.</div>
+  <div class="card"><h3>Yours to tweak</h3>Every scene has the same five pages of knobs:
+  <ul>
+  <li><b>Scene:</b> the mood, how busy, the instrument, the room</li>
+  <li><b>Volume:</b> the notes, the drone, the air, the water</li>
+  <li><b>Nature:</b> which sounds those are, and the scene's own touches</li>
+  <li><b>Music:</b> echo, warmth, phrases and the tide</li>
+  <li><b>Key:</b> the key, scale and chord, to play along (for every mood and scene)</li>
+  </ul>
+  Pick a mood to set them all at once, then adjust anything you like. Every mood remembers your tweaks, so your
+  Morning stays your Morning.</div>
+</div>
+
+<h2>Three scenes</h2>
+<div class="cards">
+  <div class="card"><h3>Sakura 桜</h3>A pale cherry leans over a narrow city stream, its far bank lined with more
+  cherries, all mirrored in the water.
+  <ul>
+  <li>Each petal that lands plays a koto note, pitched by where it lands.</li>
+  <li>Gusts shake loose a shower of petals with a harp run.</li>
+  <li>A bush warbler sings; spring showers come and go.</li>
+  <li>At night the tree is lit and paper lanterns glow along the far bank.</li>
+  </ul></div>
+  <div class="card"><h3>Koi 鯉</h3>Koi of the real varieties glide, hover and follow each other in a garden pond, a new
+  shape with each picture.
+  <ul>
+  <li>Every bite of food is a note: low in the deep middle, high near the edge.</li>
+  <li>Play a key and they come over to you.</li>
+  <li>Japanese pond frogs hop onto the lily pads, and a bamboo shishi-odoshi knocks.</li>
+  <li>Rain rings the water; at night two stone lanterns light the pond.</li>
+  </ul></div>
+  <div class="card"><h3>Hotaru 蛍</h3>Fireflies drift over a summer stream, each blinking on its own clock, until the
+  whole field falls into one shared pulse, as real fireflies do.
+  <ul>
+  <li>Each blink is a soft note.</li>
+  <li>The moon, from NASA's lunar map, takes the path its phase really takes.</li>
+  <li>Frogs call and an owl hoots.</li>
+  </ul></div>
+</div>
+
+<h2>What makes it deep</h2>
+<h3>Music that comes from the world</h3>
+<ul>
+<li><b>Nothing is a loop.</b> Every note comes from something happening on screen: a petal landing, a koi biting,
+a firefly blinking, a pebble dropping. Where, how fast and how near decide which note and how loud.</li>
+<li><b>A breathing drone</b> of three voices, each swelling and fading on its own cycle, so the bed under the notes
+is always shifting and never stops.</li>
+<li><b>Tide:</b> a slow ebb and flow, three to six minutes end to end, from sparse, dark and echoing to full and
+bright. Every few minutes the notes rest for a breath, and the world goes on without them.</li>
+<li><b>Phrases:</b> notes can come from four loops of unequal length that slide past each other, so melodies recur
+but never line up the same way twice.</li>
+<li><b>Japanese scales,</b> chosen so every key you play sounds right over the music:
+  <ul>
+  <li><b>Yo</b> (bright) by day</li>
+  <li><b>Min'yo</b> (warm) from golden hour through the night</li>
+  <li><b>In</b> (dark) only for Hotaru's Deep Night</li>
+  <li>Natural follows the light, and now and then at dawn lets the key drift a fourth or fifth.</li>
+  </ul></li>
+<li><b>Sixteen keys, sixteen notes:</b> every white key is its own note, rising left to right, and all of them glow
+softly. Any key sounds right: notes outside the chord being played come as gentle passing notes.</li>
+<li><b>Real FM synthesis</b> (Dexed's DX7-class engine): koto, harp, bells, a glass furin, water drops and mallets,
+with echoes, reverb and a Warmth control that mellows the whole sound.</li>
+<li><b>Sounds are heard where they happen:</b> a raindrop landing on the left of the pond is heard on the left, and a
+firefly high in the sky sounds higher.</li>
+</ul>
+
+<h3>Moods and time</h3>
+<ul>
+<li><b>Natural</b> runs a whole day or night in half an hour, and the music follows the light: livelier by day,
+quieter and warmer at night.</li>
+<li><b>Four moods per scene,</b> each with its own time and character:
+  <ul>
+  <li><b>Sakura:</b> Morning, Afternoon, Golden Hour, Night</li>
+  <li><b>Koi:</b> Feeding, Rain, Still Pond, Night</li>
+  <li><b>Hotaru:</b> Dusk, Festival, Quiet Night, Deep Night</li>
+  </ul></li>
+<li><b>Nothing jumps.</b> Changing mood glides the scene there over thirty seconds: the light turns, lanterns light
+one at a time, the moon slides across the sky while its shadow sweeps to the new phase.</li>
+<li><b>Every mood remembers your tweaks:</b>
+  <ul>
+  <li>Adjust a mood and it stays yours, marked with a small dot, even after a power-off.</li>
+  <li>Switch moods and come back, and it is as you left it.</li>
+  <li>A tweaked Natural still runs its whole day.</li>
+  <li>Turn just past a tweaked mood onto "Reset" and it goes back to how it was made.</li>
+  </ul></li>
+</ul>
+
+<h3>Small things worth noticing</h3>
+<ul>
+<li><b>Six real Japanese frogs</b> visit the koi pond, each in its own colors and markings, each as common as it
+would be at a garden pond, and each croaking at a pitch to match its size. The koi turn to look when one plops in.</li>
+<li><b>A real moon:</b> Hotaru's moon is drawn from NASA's Lunar Reconnaissance Orbiter map, with its true seas.
+  <ul>
+  <li>Full, gibbous, half or crescent.</li>
+  <li>A full moon rises at dusk and is highest at midnight; a crescent sets early.</li>
+  <li>A full moon makes the music brighter; a crescent makes it darker, with longer echoes.</li>
+  </ul></li>
+<li><b>Fireflies that really synchronize:</b> each nudges its neighbors toward its own timing, so the field drifts
+into one gentle pulse, holds it, and drifts apart again.</li>
+<li><b>Stars as they are:</b> scattered in loose clusters, a few faintly blue or warm, the brightest first to come
+out, dimmed near the moon and low in the haze. Shooting stars pass with a chime, and on a Deep Night the Milky Way
+appears.</li>
+<li><b>Weather:</b>
+  <ul>
+  <li><b>Mist</b> rolls in over Hotaru's field in soft fog banks.</li>
+  <li><b>Rain on Hotaru</b> rings the stream and splashes on the reeds, and the fireflies shelter on the reeds,
+  glowing slowly.</li>
+  <li><b>Rain on the koi pond</b> is seen and heard drop by drop.</li>
+  <li>Rain begins with a few drops and builds, and when it stops the last drops still fall.</li>
+  </ul></li>
+<li><b>Recorded nature,</b> all public domain: a brook, a breeze in the trees, crickets, a bush warbler's song, a frog,
+an owl and a bamboo knock, mixed with synthesized wind, water and rain.</li>
+<li><b>The pond remembers:</b> food a full koi leaves can sink and come back later as a soft bowl note.</li>
+<li><b>Painterly or pixel art,</b> at the press of a button, for every scene.</li>
+<li><b>Calm by design:</b>
+  <ul>
+  <li>The panel's lights glow softly, and only where a button does something.</li>
+  <li>The screen shows only the scene until you touch something.</li>
+  <li>A tap on HOME shows the battery, the scene and the mood for a moment.</li>
+  </ul></li>
+</ul>
+
+<h3>Play along</h3>
+<ul>
+<li><b>White keys</b> play the scene's instrument, and the scene answers:
+  <ul>
+  <li><b>Sakura:</b> the blossoms shake, and two petals land later with your note.</li>
+  <li><b>Koi:</b> the koi find the food you dropped and play your melody back in their own order.</li>
+  <li><b>Hotaru:</b> a firefly rises to your note's height and joins the rhythm.</li>
+  </ul></li>
+<li><b>Black keys</b> are each scene's own:
+  <ul>
+  <li><b>Sakura:</b> a harp whose notes ring out anywhere on the river.</li>
+  <li><b>Koi:</b> pebbles on singing bowls, and the shishi-odoshi's knock.</li>
+  <li><b>Hotaru:</b> firefly flashes, and a breeze that carries the fireflies away.</li>
+  </ul></li>
+<li>FuMi-1's <b>koto instrument</b> is still there as a mode: hold HOME.</li>
+</ul>
+
+<h2>Credits</h2>
+<ul>
+<li><b>Built on</b> <a href="https://github.com/cartesive/fumi-1">FuMi-1</a> by cartesive,
+<a href="https://github.com/charlesvestal/fm1-fomni">FoMni</a> by Charles Vestal and Felucca by Leo Kuroshita
+(Hügelton Instruments). The FM engine is Dexed's msfa.</li>
+<li><b>Ideas</b> (no code) came from:
+  <ul>
+  <li>Charles Vestal's <a href="https://github.com/charlesvestal/fm1-amb">AMB-1</a>: the breathing drone, rests, loops
+  and the slow arc</li>
+  <li>Leo Kuroshita's <a href="https://github.com/kurogedelic/avonlea">Avonlea</a>: moods</li>
+  <li>keremimo's <a href="https://github.com/keremimo/melodee">Melodee</a>: sending the screen only what changed</li>
+  <li>ambalek's <a href="https://github.com/ambalek/fall">fall</a> and Dillbo's
+  <a href="https://github.com/Dillbo/KoiBoi2">KoiBoi2</a></li>
+  </ul></li>
+<li><b>Recordings:</b> CC0, from Freesound, by BurghRecords, Anya_Media, Defelozedd94, shaunhillyard, warukunai,
+afleetingspeck, Breviceps and thegoosington.</li>
+<li><b>The moon:</b> NASA's Scientific Visualization Studio CGI Moon Kit (LRO, public domain).</li>
+</ul>
+<p><b>Going back to the official firmware:</b> use the installer's "Back to the stock firmware", or M-VAVE's updater,
+M-UPGRADE, from <a href="https://www.m-vave.com/download">m-vave.com/download</a>.</p>
+<p class="small">M-VAVE and FM-1 are trademarks of their owners; ZEN-1 is affiliated with none of them. Site from commit ec92952.</p>
+</main>
+<footer><p class="small">ZEN-1 is free software (GPL-3.0), with no warranty: <a href="https://github.com/aceyprime/zen-1">the source</a>. Built on FuMi-1, FoMni and Felucca. M-VAVE and FM-1 are trademarks of their owners; ZEN-1 is affiliated with none of them.</p></footer>
+</body>
+</html>
