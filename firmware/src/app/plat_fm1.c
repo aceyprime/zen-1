@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* FuMi-1 platform on the FM-1 (FoMni's): plat.h over Felucca's HAL, panel map, USB rings and storage.
+/* FuMi-1 platform on the FM-1 (FoMni's): plat.h over Felucca's HAL, panel map, USB rings and storage
+ * (and on the SMK-37, over hal/smk_input.h).
  * Part of the unity build (omni.c), after the HAL, usb.c, storage.c and panel.c. */
 
 uint32_t plat_ms(void) { return fm1_ms; }
@@ -13,7 +14,24 @@ uint32_t plat_buttons(void)
     return out;
 }
 
+#if BOARD_SMK37
+/* the keybed's F3..G5, its outer keys C3..E3 and G#5..C6 an octave in (the same keys of the FM-1's 27), and the pads
+ * as the white keys (the HAL keeps the key each pad pressed); a pad tapped and let go between two calls counts as held
+ * for one (its latched press) */
+uint32_t plat_keys(void)
+{
+    uint32_t k = fm1__lock();                    /* (64 bits, written by the scan ISR) */
+    uint64_t kb = fm1_in.keys;
+    uint32_t n = fm1_in.knotes | fm1_in.pnotes;
+    fm1__unlock(k);
+    n |= smk_pad_edges();
+    n |= (uint32_t)(kb & 0x1Fu) << 7;            /* C3..E3 -> C4..E4 (keys 7..11) */
+    n |= (uint32_t)(kb >> 32 & 0x1Fu) << 15;     /* G#5..C6 -> G#4..C5 (keys 15..19) */
+    return n & ((1u << NKEYS) - 1u);
+}
+#else
 uint32_t plat_keys(void) { return fm1_in.notes & ((1u << NKEYS) - 1u); }
+#endif
 
 int32_t plat_enc(int role)
 {
@@ -27,6 +45,99 @@ uint32_t plat_master(void) { return master_q12; }
 static volatile int32_t batt_raw16 = -1;            /* the battery's divider (ADC ch3), x16, smoothed; -1 not yet read */
 int32_t plat_battery_raw(void) { return batt_raw16 < 0 ? -1 : (batt_raw16 + 8) / 16; }
 
+#if BOARD_SMK37
+/* ---- the SMK-37 build: hal/smk_input.h. Button LEDs: one flag per button id, no dim level (no glow, no dim set);
+ * the keys have no LEDs: the pads light in colour (ui.c over plat_pad_rgb, lcd.c padled_*) */
+static void led_pos_init(void) {}
+void plat_glow(int on) { (void)on; }
+void plat_leds_dim(uint32_t buttons, uint32_t keys) { (void)buttons; (void)keys; }
+void plat_play_red(int red) { (void)red; }      /* SEQ PLAY has one LED */
+void plat_leds(uint32_t buttons, uint32_t keys)
+{
+    uint8_t nl[SMK_NLED] = {0};
+    uint32_t i;
+    (void)keys;
+    for (i = 0; i < NB; i++)
+        if ((buttons >> i) & 1u)
+            nl[panel.btn[i]] = 1;
+    for (i = 0; i < SMK_NLED; i++)
+        fm1_led[i] = nl[i];
+}
+
+uint32_t plat_smk_buttons(void)
+{
+    return (fm1_in.buttons >> SMK_BTN_KNOB_BANK & 1u) << SB_KNOB_BANK |
+           (fm1_in.buttons >> SMK_BTN_FADER_BANK & 1u) << SB_FADER_BANK |
+           (fm1_in.buttons >> SMK_BTN_LEFT & 1u) << SB_LEFT | (fm1_in.buttons >> SMK_BTN_RIGHT & 1u) << SB_RIGHT;
+}
+int plat_fader(int i) { return fm1_in.frames < 200u || (uint32_t)i > 3u ? -1 : (int)fm1_in.fader[i]; }
+void plat_pad_rgb(int pad, uint8_t r, uint8_t g, uint8_t b)
+{
+    if ((uint32_t)pad < SMK_NPAD)
+        padled_set((uint32_t)pad, r, g, b);
+}
+
+/* the wheels (mux C address 4 = pitch, 5 = mod), self-calibrating: the pitch wheel's rest is its centre (taken once
+ * the readings settle, followed slowly while it rests), each wheel's range grows to what it has reached (the travel
+ * is short: raw ~445..640 pitch, ~474..629 mod on a unit). Pitch: -127..127 with a dead band around the centre; mod:
+ * 0..127, up (lower raw) = more. */
+#define SMK_PITCH_MAX 127
+int plat_wheels(int32_t *pitch, int32_t *modw)
+{
+    enum { DEAD = 12, SPAN0 = 80, MOD_LO = 485, MOD_HI = 615 };
+    static int32_t pc, plo, phi, mlo, mhi, rest, last_b = -1, last_m = -1;
+    int32_t p = fm1_in.wheel[0], m = fm1_in.wheel[1], d, b, mw;
+    if (fm1_in.frames < 300u)                    /* (the readings settle) */
+        return 0;
+    if (!pc) {
+        pc = p;
+        plo = p - SPAN0;
+        phi = p + SPAN0;
+        mlo = m < MOD_LO ? m : MOD_LO;
+        mhi = m > MOD_HI ? m : MOD_HI;
+    }
+    if (p < plo)
+        plo = p;
+    if (p > phi)
+        phi = p;
+    if (m < mlo)
+        mlo = m;
+    if (m > mhi)
+        mhi = m;
+    d = p - pc;
+    if (d > -DEAD && d < DEAD) {
+        b = 0;
+        if (++rest > 200) {                      /* resting: the centre follows a slow drift */
+            pc += d > 0 ? 1 : d < 0 ? -1 : 0;
+            rest = 0;
+        }
+    } else {
+        rest = 0;
+        b = d > 0 ? (d - DEAD) * SMK_PITCH_MAX / (phi - pc - DEAD > 1 ? phi - pc - DEAD : 1)
+                  : (d + DEAD) * SMK_PITCH_MAX / (pc - plo - DEAD > 1 ? pc - plo - DEAD : 1);
+        b = clamp(b, -SMK_PITCH_MAX, SMK_PITCH_MAX);
+    }
+    mw = mhi - m <= DEAD ? 0 : (mhi - m - DEAD) * 127 / (mhi - mlo - DEAD > 1 ? mhi - mlo - DEAD : 1);
+    mw = clamp(mw, 0, 127);
+    if (b == last_b && mw == last_m)
+        return 0;
+    last_b = b;
+    last_m = mw;
+    *pitch = b;
+    *modw = mw;
+    return 1;
+}
+
+/* the factory velocity curves of the keys and pads: USRTRIM (flash 0xC1000, "trimdat" at +0x224), read only,
+ * over the SPI read (no XIP window needed), into a buffer on the stack (once, at power-on); smk_trim_load
+ * ignores a record that does not check out */
+static void smk_trim_init(void)
+{
+    uint8_t buf[0x22Cu] __attribute__((aligned(4)));
+    if (flash_ok && st_read(SMK_TRIM_FLASH, buf, sizeof buf) == 0)
+        smk_trim_load(buf);
+}
+#else
 /* LEDs: the picture is built off-line and copied one byte per column (Felucca: clearing
  * and relighting would let the 10 kHz scan catch the dark gap and flicker) */
 static uint8_t led_pos[FM1_NKEY];
@@ -84,6 +195,8 @@ void plat_leds(uint32_t buttons, uint32_t keys)
     fm1_led_dim_div = glow_on || dim_set ? GLOW_DIV : 0u;
 }
 
+#endif
+
 /* MIDI: Felucca's rings carry 4-byte USB-MIDI event packets, byte 0 = cable / CIN */
 int plat_midi_in(uint32_t *pkt)
 {
@@ -103,6 +216,16 @@ int plat_store_load(uint32_t obj, void *dst, uint32_t max) { return flash_ok ? s
  * key of it at full brightness. A save in the journal, a piece a frame, went across the keys as a flicker. Now the
  * lines go dark first: a write shows as a dark millisecond, which can't be seen. A long one (the panel's, an erase)
  * clears the picture, so the scan keeps them dark; leds() puts it back next frame. */
+#if BOARD_SMK37
+static void led_hush(void)                         /* (the SMK's button LEDs: no dim frame to catch; dark for an erase) */
+{
+    uint32_t c, f = irq_save();
+    for (c = 0; c < SMK_NLED; c++)
+        fm1_led[c] = 0;
+    irq_restore(f);
+}
+#define fm1__led_lines(m) ((void)(m))
+#else
 static void led_hush(void)
 {
     uint32_t c, f = irq_save();
@@ -111,6 +234,7 @@ static void led_hush(void)
     fm1__led_lines(0);
     irq_restore(f);
 }
+#endif
 
 int plat_store_save(uint32_t obj, const void *src, uint32_t len)
 {
@@ -120,10 +244,15 @@ int plat_store_save(uint32_t obj, const void *src, uint32_t len)
     return st_save(obj, src, len);
 }
 
-/* the save journal (plat.h): the platform's own range-checked flash access, inside 0xC0000..0xC7FFF only */
+/* the save journal (plat.h): the platform's own range-checked flash access, inside its 8 sectors only (PLAT_JR_BASE) */
 static uint32_t jr_prog_us_max;
 static uint32_t audio_halves(void);                /* main_fm1.c: audio halves rendered, the last one's time */
 static uint32_t audio_last_us(void);
+#if BOARD_SMK37
+_Static_assert(PLAT_JR_BASE >= ST_SMK_BASE + 2u * OBJ_NOBJ * ST_SECTOR &&
+               PLAT_JR_BASE + PLAT_JR_SECTOR * PLAT_JR_NSECTOR <= ST_SMK_OBJ_HI,
+               "SMK: the journal must lie in the store, after the objects, below the owner tag");
+#endif
 static int jr_in(uint32_t off, uint32_t n) { return off < PLAT_JR_SECTOR * PLAT_JR_NSECTOR && n <= PLAT_JR_SECTOR * PLAT_JR_NSECTOR - off; }
 int plat_jr_read(uint32_t off, void *dst, uint32_t n)
 {

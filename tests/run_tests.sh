@@ -58,10 +58,33 @@ if [ -n "$PKG" ]; then
         $CC -o $OUT/ldr_test tests/ldr_test.c && $OUT/ldr_test $OUT/old.fwsc $PKG"
     fi
     run installer $PY tests/install_test.py
+    # The SMK-37 build (BOARD_SMK37): the flash map and store owner, the package layout, the OTA staging and
+    # the loader windows, on SMK-layout packages made here from the FM-1 binaries (layout and protocol under test)
+    run smk37-flash sh -c "$CC -O2 -Wall -DBOARD_SMK37=1 -Ifirmware/hal -o $OUT/smk_flash_test tests/smk_flash_test.c && \
+        $OUT/smk_flash_test"
+    if [ -z "${AC79_SDK:-}" ]; then
+        echo "  skip smk37 package / update path (needs AC79_SDK, as the build)"
+    else
+    run smk37-package sh -c "$PY tools/fm1pkg_make.py --board smk37 build/zen1.bin build/loader/ota.bin \
+        $OUT/smk_new.fwsc >/dev/null && $PY tests/smk_pkg_test.py $OUT/smk_new.fwsc"
+    run smk37-ota-entry sh -c "$CC -DBOARD_SMK37=1 -o $OUT/ota_test_smk tests/ota_test.c && \
+        $OUT/ota_test_smk $OUT/smk_new.fwsc"
+    for m in 1 2; do                     # the MODEL=elite / mke builds of ota.c
+        run smk37-ota-entry-model$m sh -c "$CC -DBOARD_SMK37=1 -DT_MODEL=$m -o $OUT/ota_test_smk_m$m tests/ota_test.c && \
+            $OUT/ota_test_smk_m$m $OUT/smk_new.fwsc"
+    done
+    [ -f build/zen1-smk37.fwsc ] && run smk37-build-package python3 tests/smk_pkg_test.py build/zen1-smk37.fwsc "SMK-37 Pro_460"
+    [ -f build/zen1-smk37-elite.fwsc ] && run smk37-build-package-elite python3 tests/smk_pkg_test.py build/zen1-smk37-elite.fwsc "SMK-37 Elite_460"
+    [ -f build/zen1-smk37-mke.fwsc ] && run smk37-build-package-mke python3 tests/smk_pkg_test.py build/zen1-smk37-mke.fwsc "MKE-P37_460"
+    run smk37-update-loader sh -c "head -c 100000 build/zen1.bin > $OUT/old_app.bin && \
+        $PY tools/fm1pkg_make.py --board smk37 $OUT/old_app.bin build/loader/ota.bin $OUT/smk_old.fwsc >/dev/null && \
+        $CC -DBOARD_SMK37=1 -o $OUT/ldr_test_smk tests/ldr_test.c && $OUT/ldr_test_smk $OUT/smk_old.fwsc $OUT/smk_new.fwsc"
+    fi
 else
     echo "  skip update-path tests (no build/zen1.fwsc: run ./build.sh)"
 fi
 run host-build sh host/build_host.sh
+command -v node >/dev/null 2>&1 && run web-installer node web/test_web.mjs   # fm1ota.js / fm1pkg.js against a simulated device
 if command -v emcc >/dev/null 2>&1; then
     run emu sh -c "sh web/emu/build.sh >/dev/null && node tests/host/emu_test.mjs build/emu/zen1.wasm"
     run bench node tests/host/bench_test.mjs build/emu/zen1.wasm
@@ -75,6 +98,13 @@ for s in tests/scenarios/*.zen; do
     n=$(basename "$s" .zen)
     mkdir -p "build/scenarios/$n"
     run "scenario-$n" build/host/zen_host "$s" "build/scenarios/$n"
+done
+# the SMK-37 build's UI in the simulator: its keys, pads and their lights, faders, wheels and extra buttons
+run host-build-smk37 sh host/build_host.sh smk37
+for s in tests/scenarios/smk37/*.zen; do
+    n=$(basename "$s" .zen)
+    mkdir -p "build/scenarios/smk37-$n"
+    run "scenario-smk37-$n" build/host/zen_host_smk37 "$s" "build/scenarios/smk37-$n"
 done
 run syx-dump $PY tools/syx_dump.py --selftest
 run analyze-ref $PY tools/analyze_ref.py --selftest

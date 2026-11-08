@@ -47,14 +47,18 @@ int plat_store_save(uint32_t obj, const void *src, uint32_t len);   /* 0 = ok */
 #define PLAT_STORE_MAX 3840u           /* bytes per object */
 enum { OBJ_PROJ, OBJ_PANEL, OBJ_NOBJ };
 /* flash: OBJ_PROJ 0xFC000, OBJ_PANEL 0xDC000 (2 sectors each, inside Felucca's data area); ZEN-1's save
- * journal 0xC0000..0xC7FFF (below) */
+ * journal 0xC0000..0xC7FFF (below). The SMK-37: the objects 0x9D000..0xA0FFF, the journal 0xA1000..0xA8FFF */
 
 /* ZEN-1's save journal: 8 sectors of the data area the app writes itself, so that a save during play is a
  * few page programs (well under a millisecond each, interrupts on in between) instead of a sector erase (up to
  * ~0.4 s with the interrupts off: the audio and the key lights stop). The sectors are erased only at power-on,
  * before the audio starts (project.c). Offsets are from the journal's start. Every call goes through the
  * platform's own range-checked flash access (st_read / st_prog / st_erase); without the flash: < 0. */
+#if defined(BOARD_SMK37) && BOARD_SMK37
+#define PLAT_JR_BASE 0xA1000u                  /* the SMK-37: in its store, after the objects (storage.c), 0xA1000..0xA8FFF */
+#else
 #define PLAT_JR_BASE 0xC0000u
+#endif
 #define PLAT_JR_SECTOR 4096u
 #define PLAT_JR_NSECTOR 8u
 int plat_jr_read(uint32_t off, void *dst, uint32_t n);
@@ -68,3 +72,17 @@ uint32_t plat_xruns(void);
 uint32_t plat_us(void);                /* microseconds, for measuring the main loop's work (wraps after 71 min) */
 uint32_t plat_cpu_max(void);           /* the slowest single render since the reset, % of its budget (not smoothed) */
 void plat_cpu_max_reset(void);
+
+#if defined(BOARD_SMK37) && BOARD_SMK37
+/* The SMK-37 build: the M-Vave SMK-37's controls beyond the FM-1's (plat_fm1.c over hal/smk_input.h). plat_keys()
+ * above is the keybed's F3..G5, the FM-1's 27 keys (the outer keys C3..E3 and G#5..C6 an octave in), and the 16
+ * pads as its 16 white keys, low notes on the bottom row. Pads are numbered as the hardware: 0..7 the top row,
+ * 8..15 the bottom row, left to right. */
+#define SMK_NPADS 16
+#define PLAT_PAD_OF_WHITE(w) ((w) < 8 ? (w) + 8 : (w) - 8)   /* white key 0..15 (0 = F3) -> its pad */
+enum { SB_KNOB_BANK, SB_FADER_BANK, SB_LEFT, SB_RIGHT, NSB };   /* the four buttons the FM-1 has not */
+uint32_t plat_smk_buttons(void);       /* held: bit SB_* */
+int plat_fader(int i);                 /* fader 0..3: 0..127, -1 while the readings settle */
+int plat_wheels(int32_t *pitch, int32_t *modw);   /* 1 = new values: pitch -127..127 (0 at rest), mod 0..127 */
+void plat_pad_rgb(int pad, uint8_t r, uint8_t g, uint8_t b);   /* pad p's LED */
+#endif
