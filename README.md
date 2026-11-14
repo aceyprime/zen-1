@@ -121,3 +121,5 @@ NASA's Scientific Visualization Studio CGI Moon Kit, public domain ([assets/imag
 GPL-3.0-only; see [LICENSING.md](LICENSING.md). M-VAVE and FM-1 are trademarks of their owners; Suiko and ST-50 are
 names of Suikohsha. ZEN-1 is independent firmware, not affiliated with or endorsed by any of them. It never enables
 the hardware's Bluetooth or Wi-Fi radio.
+
+You can also try ZEN-1 in the browser, no flashing needed, in the free community [FM-1 Emulator](https://fm1-emulator.atst.tools/).
