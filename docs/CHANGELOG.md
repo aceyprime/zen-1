@@ -4,6 +4,12 @@ Identities are `FM-1_6` + major, minor and patch as two digits each; the FM-1 re
 (`python3 tools/fm1_install.py --info`). FuMi-1's own releases, up to 1.0.3 where ZEN-1 began, are in
 [its changelog](https://github.com/cartesive/fumi-1/blob/main/docs/CHANGELOG.md).
 
+## Unreleased
+
+- **Newer FM-1 flash chip** (UC25HQ80, JEDEC `0xB36014`): recognised alongside the Puya (`0x856014`), so
+  settings save across power-off and USB updates start again. `tools/fm1_rescue.py` accepts the new ID too.
+  ([#3](https://github.com/aceyprime/zen-1/issues/3))
+
 ## 1.2 — `FM-1_6010200`
 
 - **The panel's lights (ENV):** On, Auto or Off, kept across power-offs. Auto puts every light out after 30 seconds
